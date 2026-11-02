@@ -1,0 +1,10 @@
+{
+  "description": "为企业员工提供统一门户，集中查看领导与个人日程、系统入口、协调事项、故障信息及新闻和质量资讯。",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

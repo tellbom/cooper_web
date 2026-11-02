@@ -1,0 +1,64 @@
+$auth-surfaces: ':is(.rbac-admin-page, .rbac-group-page, .rbac-rule-page, .rbac-apimap-page, .rbac-grant-page, .rbac-admin-log-page)';
+
+#{$auth-surfaces},
+.rbac-auth-drawer,
+.rbac-auth-dialog {
+    .el-button {
+        min-height: var(--el-component-size);
+    }
+
+    .el-button.el-button--small {
+        min-height: var(--el-component-size-small);
+    }
+
+    .el-input .el-input__inner {
+        line-height: var(--el-input-inner-height);
+    }
+
+    .el-card {
+        border: 1px solid var(--el-border-color-light);
+    }
+}
+
+.rbac-auth-dialog.contact-dialog {
+    --wf-canvas: var(--co-canvas);
+    --wf-bg: var(--co-bg);
+    --wf-bg-card: var(--co-surface);
+    --wf-border: var(--co-border);
+    --wf-divider: var(--co-divider);
+    --wf-ink: var(--co-ink);
+    --wf-ink-3: var(--co-ink-muted);
+    --wf-ink-disabled: var(--co-ink-disabled);
+    --wf-primary: var(--co-primary);
+    --wf-primary-hover: var(--co-primary-hover);
+    --wf-primary-light: var(--co-primary-light);
+    --wf-font-sm: 12px;
+    --wf-font-base: var(--co-font-base);
+    --wf-font-md: var(--co-font-md);
+    --wf-font-lg: 15px;
+    --wf-font-weight-normal: 400;
+    --wf-font-weight-medium: var(--co-font-weight-medium);
+    --wf-font-weight-semibold: 600;
+    --wf-radius-sm: var(--co-radius-sm);
+    --wf-radius-lg: var(--co-radius-card);
+    --wf-space-4: var(--co-space-1);
+    --wf-space-8: var(--co-space-2);
+    --wf-space-12: var(--co-space-3);
+    --wf-space-16: var(--co-space-4);
+    --wf-transition-fast: var(--co-transition-fast);
+}
+
+.rbac-auth-dialog.contact-dialog .el-dialog__header {
+    margin-bottom: 0;
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid var(--co-border);
+}
+
+.rbac-auth-dialog.contact-dialog .el-dialog__body {
+    padding: 0;
+}
+
+.rbac-auth-dialog.contact-dialog .contact-selector {
+    height: min(600px, calc(100vh - 150px));
+    min-height: min(420px, calc(100vh - 150px));
+}

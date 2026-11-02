@@ -1,0 +1,208 @@
+.notice-launch {
+    position: fixed;
+    right: 24px;
+    top: 72px;
+    z-index: 80;
+}
+.notice-launch button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #e5e9f0;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 8px 28px rgba(20, 26, 43, 0.12);
+    font: 13px 'Noto Sans SC';
+    color: #3d4458;
+    padding: 10px 16px;
+    cursor: pointer;
+    min-height: 0;
+}
+.notice-launch span {
+    color: #2563eb;
+    margin-left: 8px;
+}
+.notice-window {
+    height: 100vh;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    color: #000;
+    font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+    overflow: hidden;
+}
+.notice-window button,
+.notice-window a {
+    min-height: 0;
+    font: inherit;
+}
+.notice-window > header {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e5e9f0;
+    padding: 0 24px;
+    flex-shrink: 0;
+}
+.notice-window > header > div {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.notice-window-mark {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    background: #fff1f2;
+    color: #bc1e24;
+    border-radius: 8px;
+}
+.notice-window h2 {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 24px;
+}
+.notice-window header small {
+    font-size: 11px;
+    color: #9aa1b2;
+}
+.notice-window > header > button {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #6b7386;
+    cursor: pointer;
+}
+.notice-window > header > button:hover {
+    background: #f4f6fa;
+    color: #141a2b;
+}
+.notice-window-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scroll-padding-block: 24px;
+}
+.notice-window-scroll:focus-visible {
+    outline: 2px solid #bfdbfe;
+    outline-offset: -2px;
+}
+.notice-window .official-paper {
+    position: relative;
+    max-width: 760px;
+    margin: 0 auto;
+    min-width: 0;
+    padding: 30px 36px 36px;
+}
+.notice-window .official-paper + .official-paper {
+    border-top: 8px solid #f4f6fa;
+}
+.notice-pin {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: max-content;
+    margin: 0 auto 12px;
+    padding: 3px 8px;
+    background: #fff1f2;
+    color: #b51c24;
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 500;
+}
+.official-paper h1 {
+    font-family: 'Noto Serif SC', 'SimSun', serif;
+    color: #b51c24;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.5;
+    letter-spacing: 0;
+    text-align: center;
+    margin: 0 0 20px;
+}
+.official-paper .official-rule {
+    height: 1.5px;
+    background: #b51c24;
+    margin-bottom: 24px;
+}
+.official-paper .official-body {
+    font-family: 'FangSong', '仿宋', 'Noto Serif SC', serif;
+    font-size: 16px;
+    line-height: 1.9;
+    letter-spacing: 0;
+    word-break: break-word;
+    text-align: justify;
+    color: #000;
+}
+.official-paper .official-body p {
+    margin: 0 0 12px;
+    text-indent: 2em;
+}
+.official-paper .official-body p:first-child {
+    text-indent: 0;
+}
+.official-paper .official-body h2,
+.official-paper .official-body h3 {
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    color: #000;
+    line-height: 1.9;
+    margin: 14px 0 6px;
+}
+.official-paper > footer {
+    font-family: 'FangSong', '仿宋', 'Noto Serif SC', serif;
+    font-size: 16px;
+    line-height: 1.9;
+    text-align: right;
+    margin-top: 28px;
+    letter-spacing: 0;
+}
+.official-paper footer p {
+    margin: 0;
+}
+.official-paper .notice-period {
+    display: block;
+    margin-top: 24px;
+    font: 10px 'Noto Sans SC';
+    color: #9aa1b2;
+}
+.official-attachments {
+    margin-top: 20px;
+    font: 14px/1.8 'Noto Serif SC';
+}
+.official-attachments > a {
+    display: block;
+    font-size: 13px;
+    color: #2563eb;
+}
+.notice-window > .portal-skeleton {
+    padding: 32px !important;
+}
+.notice-window .skeleton-article-cover {
+    display: none;
+}
+.notice-window > .portal-state {
+    flex: 1;
+}
+.notice-refresh-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 4px 16px;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 12px;
+    flex-shrink: 0;
+}

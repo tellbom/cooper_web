@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Noto Sans SC', 'PingFang SC', system-ui, sans-serif;
+  --font-serif: 'Noto Serif SC', 'Songti SC', serif;
+  --color-brand: #2563eb;
+  --color-brand-deep: #1d4ed8;
+  --color-brand-soft: #edf3ff;
+  --color-ink: #141a2b;
+  --color-body: #3d4458;
+  --color-muted: #6b7386;
+  --color-faint: #9aa1b2;
+  --color-hair: #e5e9f0;
+  --color-hair-soft: #eef1f6;
+  --color-canvas: #f4f6fa;
+  --color-soft: #f7f9fc;
+}
+
+@layer base {
+  body { @apply bg-canvas text-ink font-sans antialiased; }
+}
+
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: #d8dee8 transparent; }
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #d8dee8; border-radius: 9999px; }
+.prose-news p { margin: 0 0 1.1em; line-height: 1.95; text-indent: 2em; }
+.prose-news h3 { font-family: var(--font-serif); font-size: 1.18em; font-weight: 600; color: var(--color-ink); margin: 1.9em 0 .8em; letter-spacing: -0.01em; }
+.prose-news figure { margin: 1.8em 0; }
+.prose-news img { display: block; width: 100%; border-radius: 12px; }
+.prose-news figcaption { margin-top: .7em; text-align: center; font-size: 13px; color: var(--color-muted); }
+.prose-news a { color: var(--color-brand); text-decoration: underline; text-underline-offset: 3px; }
+
+/* 值班 / 会议 无缝纵向滚动 */
+@keyframes marquee-y { to { transform: translateY(-50%); } }
+.marquee { animation: marquee-y var(--d) linear infinite; }
+.autoscroll:hover .marquee { animation-play-state: paused; }
+.fade-y { mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%); }
+@media (prefers-reduced-motion: reduce) { .marquee { animation: none; } }
+
+/* 搜索高亮 */
+.hl em { font-style: normal; color: var(--color-brand); background: var(--color-brand-soft); border-radius: 3px; padding: 0 2px; }

@@ -1,0 +1,62 @@
+[
+  {
+    "path": "home",
+    "title": "首页",
+    "component": "/src/features/cooper/pages/Home.vue"
+  },
+  {
+    "path": "data",
+    "title": "数据管控",
+    "component": "/src/features/cooper/pages/ExternalPage.vue"
+  },
+  {
+    "path": "hours",
+    "title": "工时统计",
+    "component": "/src/features/cooper/pages/ExternalPage.vue"
+  },
+  {
+    "path": "loss",
+    "title": "运营损失",
+    "component": "/src/features/cooper/pages/ExternalPage.vue"
+  },
+  {
+    "path": "quality",
+    "title": "质量日报",
+    "component": "/src/features/cooper/pages/ExternalPage.vue"
+  },
+  {
+    "path": "dnc",
+    "title": "DNC数据",
+    "component": "/src/features/cooper/pages/ExternalPage.vue"
+  },
+  {
+    "path": "news",
+    "title": "新闻资讯",
+    "component": "/src/features/cooper/pages/NewsList.vue"
+  },
+  {
+    "path": "news/detail",
+    "title": "新闻详情",
+    "component": "/src/features/cooper/pages/NewsDetail.vue"
+  },
+  {
+    "path": "search",
+    "title": "资讯检索",
+    "component": "/src/features/cooper/pages/Search.vue"
+  },
+  {
+    "path": "preview/news",
+    "title": "新闻预览",
+    "component": "/src/features/cooper/pages/Preview.vue"
+  },
+  {
+    "path": "preview/notice",
+    "title": "公告预览",
+    "component": "/src/features/cooper/pages/Preview.vue"
+  },
+  {
+    "path": "preview/office",
+    "title": "文档预览",
+    "component": "/src/features/cooper/pages/OfficePreview.vue"
+  }
+]

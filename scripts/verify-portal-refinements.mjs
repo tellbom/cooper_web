@@ -1,0 +1,91 @@
+import { chromium } from 'playwright-core'
+import fs from 'node:fs'
+import path from 'node:path'
+import assert from 'node:assert/strict'
+
+if (!process.env.COOPER_TEST_USER || !process.env.COOPER_TEST_PASSWORD) throw new Error('Set COOPER_TEST_USER and COOPER_TEST_PASSWORD locally.')
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
+const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } }), page = await context.newPage()
+const out = path.resolve('.tmp/portal-qa'), checks = [], errors = []
+fs.mkdirSync(out, { recursive: true })
+page.on('pageerror', e => errors.push(e.message))
+const ok = (value, name) => { assert.ok(value, name); checks.push(name); console.log('PASS', name) }
+async function closeDialog(selector) {
+    await page.locator(selector).locator('.el-dialog__headerbtn').click()
+    await page.locator(selector).waitFor({ state: 'hidden' })
+}
+try {
+    await page.goto('http://localhost:1919/cooper/home')
+    await page.locator('.portal-home,#username').first().waitFor({ timeout: 35000 })
+    if (page.url().includes('/protocol/openid-connect/auth')) {
+        await page.locator('#username').fill(process.env.COOPER_TEST_USER)
+        await page.locator('#password').fill(process.env.COOPER_TEST_PASSWORD)
+        await page.locator('#kc-login').click()
+    }
+    await page.waitForURL('**/cooper/home', { timeout: 25000 }); await page.locator('.portal-home').waitFor()
+    await page.getByRole('tab', { name: '我的日程', exact: true }).click()
+    await page.locator('.event-chip').first().waitFor()
+    await page.getByRole('button', { name: '展开当日详细日程', exact: true }).click()
+    await page.locator('.portal-day-drawer .day-drawer-events li').first().waitFor()
+    const count = await page.locator('.event-chip').count()
+    ok(count > 0 && await page.locator('.day-drawer-events li').count() === count, 'daily agenda expands into a full-height drawer with all entries')
+    await page.screenshot({ animations: 'disabled', path: path.join(out, 'daily-agenda-drawer.png') })
+    await page.locator('.day-drawer-events button').first().click()
+    await page.locator('.event-time-summary').waitFor()
+    ok(await page.locator('.event-detail-dialog .el-button--primary').innerText() === '编辑日程' && await page.locator('.event-detail-title').innerText(), 'event detail gives the title, time and edit action a clear visual hierarchy')
+    await page.screenshot({ animations: 'disabled', path: path.join(out, 'event-detail.png') })
+    await page.getByRole('button', { name: '编辑日程', exact: true }).click()
+    await page.locator('.event-form-dialog').waitFor()
+    await page.waitForFunction(() => document.activeElement === document.querySelector('.event-subject-field input'))
+    const oldTitle = await page.locator('.event-subject-field input').inputValue()
+    await page.locator('.event-subject-field input').fill(oldTitle + '（编辑验收）')
+    await page.screenshot({ animations: 'disabled', path: path.join(out, 'event-editor.png') })
+    await page.getByRole('button', { name: '保存日程', exact: true }).click()
+    await page.locator('.event-form-dialog').waitFor({ state: 'hidden' })
+    await page.locator('.day-drawer-events h4').filter({ hasText: '（编辑验收）' }).waitFor()
+    ok(true, 'editing focuses the subject and saves back to the expanded agenda')
+    await page.locator('.portal-day-drawer .el-drawer__close-btn').click()
+    await page.locator('.portal-day-drawer').waitFor({ state: 'hidden' })
+    await page.getByRole('button', { name: '查看全部问题', exact: false }).click()
+    await page.locator('.fault-state-cards button').first().waitFor()
+    const positions = await page.evaluate(() => ['.fault-dialog .dialog-heading-title', '.fault-dialog-toolbar', '.fault-state-cards', '.fault-dialog .prototype-table'].map(selector => { const r = document.querySelector(selector).getBoundingClientRect(); return { x: r.x, right: r.right } }))
+    ok(positions.every(r => Math.abs(r.x - positions[0].x) < 1) && positions.slice(1).every(r => Math.abs(r.right - positions[1].right) < 1), 'fault heading, filters, counters and table share consistent left and right gutters')
+    await page.screenshot({ animations: 'disabled', path: path.join(out, 'fault-alignment.png') })
+    await closeDialog('.fault-dialog')
+    await page.getByRole('button', { name: '全部应用', exact: false }).click()
+    await page.locator('.application-cards>div').first().waitFor()
+    await page.getByRole('button', { name: '更多资源', exact: false }).click()
+    await page.getByRole('menuitem', { name: '软件下载', exact: true }).waitFor()
+    const resources = (await page.locator('.el-dropdown-menu:visible').getByRole('menuitem').allTextContents()).map(text=>text.trim())
+    ok(resources.length === 2 && resources.includes('软件下载') && resources.includes('表格下载') && !resources.includes('关注订阅'), 'application resources contain only software and form downloads')
+    await page.locator('.systems-dialog .dialog-heading-title').click(); await closeDialog('.systems-dialog')
+    await page.locator('.honor-card .more-link').click()
+    ok(!await page.locator('.el-dialog:visible').count(), 'honor More no longer opens a local dialog')
+    await page.goto('http://localhost:1919/cooper/news')
+    await page.locator('.news-list-lead').waitFor()
+    ok(!await page.locator('.editorial-page input,.editorial-page form').count() && await page.locator('.editorial-heading a[href="/cooper/search"]').count() === 1, 'news browsing has no search form and links to the dedicated search page')
+    await page.goto('http://localhost:1919/cooper/search')
+    await page.locator('.search-result').first().waitFor()
+    await page.evaluate(async () => {
+        const { auraItems } = await import('/src/features/cooper/mock.ts')
+        const base = { highlight: null, publisher: '演示部门', author: '演示部门', publishTime: '2026-10-27T23:00:00', cover: null }
+        auraItems.unshift({ ...base, sourceType: 'News', newsId: 'plain-news-check', title: '新闻纯文本验收', summary: '<p>后端截断的新闻摘要<strong>重点</strong></p>', contentHtml: null }, { ...base, sourceType: 'Announcement', newsId: 'html-notice-check', title: '公告完整正文验收', summary: null, contentHtml: '<p style="text-align:center"><strong>公文要点</strong></p>' + '<p>公告正文保留完整 HTML 排版。</p>'.repeat(12) })
+    })
+    await page.locator('.search-filters .portal-segmented').first().getByText('新闻', { exact: true }).click()
+    const news = page.locator('.search-result').filter({ has: page.locator('h3', { hasText: '新闻纯文本验收' }) })
+    await news.waitFor()
+    ok((await news.locator('.search-news-excerpt').innerText()) === '后端截断的新闻摘要重点' && !await news.locator('.search-news-excerpt *').count(), 'news snippets render plain text without HTML elements')
+    await page.locator('.search-filters .portal-segmented').first().getByText('公告', { exact: true }).click()
+    const notice = page.locator('.search-result').filter({ has: page.locator('h3', { hasText: '公告完整正文验收' }) })
+    await notice.waitFor()
+    ok(await notice.locator('.search-announcement-excerpt strong').count() === 1 && (await notice.locator('.search-announcement-excerpt').boundingBox()).height <= 72, 'announcement excerpts preserve HTML while keeping long bodies compact in results')
+    await notice.click()
+    await page.locator('.search-reading-dialog .prose-news').waitFor()
+    ok(await page.locator('.search-reading-dialog .prose-news p').count() === 13 && await page.locator('.search-reading-dialog .prose-news strong').innerText() === '公文要点', 'opening an announcement renders its complete untruncated HTML body')
+    ok(errors.length === 0, 'no browser runtime errors in the refinement flows')
+    fs.writeFileSync(path.join(out, 'refinements-result.json'), JSON.stringify({ passed: checks.length, checks, errors, node: process.version }, null, 2))
+} catch (error) {
+    await page.screenshot({ animations: 'disabled', path: path.join(out, 'refinements-failure.png') })
+    console.error('FAILED AT', checks.length, page.url())
+    throw error
+} finally { await browser.close() }
