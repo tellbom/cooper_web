@@ -166,7 +166,7 @@
     <template #footer="{ cancel }">
       <div class="drawer-footer">
         <el-button @click="cancel">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">
+        <el-button type="primary" :loading="submitting" :disabled="!auth(mode === 'edit' ? 'edit' : 'add')" @click="handleSubmit">
           {{ mode === 'create' ? '创建权限组' : '保存修改' }}
         </el-button>
       </div>
@@ -179,6 +179,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import EditorDrawer from '/@/components/claudetable/EditorDrawer.vue'
+import { auth } from '/@/utils/common'
 import {
   createGroup, updateGroup,
   getGroupOptions, getApiMapList,
@@ -374,7 +375,9 @@ watch(
 
 // ── 提交 ───────────────────────────────────────────────────────
 async function handleSubmit() {
+  if (!auth(props.mode === 'edit' ? 'edit' : 'add')) return
   try { await formRef.value.validate() } catch { return }
+  if (!auth(props.mode === 'edit' ? 'edit' : 'add')) return
   submitting.value = true
   try {
     if (props.mode === 'create') {

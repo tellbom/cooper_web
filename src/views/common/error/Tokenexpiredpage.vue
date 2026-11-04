@@ -34,13 +34,13 @@
             <!-- 倒计时环 -->
             <div class="te-countdown-wrap">
                 <svg class="te-countdown-ring" width="72" height="72" viewBox="0 0 72 72">
-                    <circle cx="36" cy="36" r="30" fill="none" stroke="#f0eeec" stroke-width="4" />
+                    <circle cx="36" cy="36" r="30" fill="none" stroke="#e8f1ff" stroke-width="4" />
                     <circle
                         cx="36"
                         cy="36"
                         r="30"
                         fill="none"
-                        stroke="#c62f2f"
+                        stroke="var(--co-primary)"
                         stroke-width="4"
                         stroke-linecap="round"
                         stroke-dasharray="188.5"
@@ -117,7 +117,6 @@ let timer = null
 
 function reLogin() {
     clearInterval(timer)
-    // TODO: 替换为真实登录路由
     router.push('/login')
 }
 
@@ -144,8 +143,8 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f7f6f3;
-    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    background: var(--co-canvas-subtle);
+    font-family: var(--co-font-family);
     overflow: hidden;
     z-index: 9999;
 }
@@ -165,14 +164,14 @@ onBeforeUnmount(() => {
 .te-bg-blob--1 {
     width: 480px;
     height: 480px;
-    background: rgba(198, 47, 47, 0.07);
+    background: rgba(0, 102, 204, 0.07);
     top: -180px;
     left: -100px;
 }
 .te-bg-blob--2 {
     width: 360px;
     height: 360px;
-    background: rgba(139, 26, 26, 0.05);
+    background: rgba(0, 79, 159, 0.05);
     bottom: -130px;
     right: -80px;
 }
@@ -218,7 +217,7 @@ onBeforeUnmount(() => {
     position: absolute;
     inset: 8px;
     border-radius: 20px;
-    background: rgba(198, 47, 47, 0.15);
+    background: rgba(0, 102, 204, 0.15);
     filter: blur(12px);
     z-index: 0;
 }
@@ -229,12 +228,12 @@ onBeforeUnmount(() => {
     height: 80px;
     border-radius: 22px;
     background: #fff;
-    border: 1.5px solid rgba(198, 47, 47, 0.12);
+    border: 1.5px solid rgba(0, 102, 204, 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #c62f2f;
-    box-shadow: 0 4px 24px rgba(198, 47, 47, 0.12);
+    color: var(--co-primary);
+    box-shadow: 0 4px 24px rgba(0, 102, 204, 0.12);
 }
 .te-icon-badge {
     position: absolute;
@@ -243,14 +242,14 @@ onBeforeUnmount(() => {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #c62f2f;
+    background: var(--co-primary);
     color: #fff;
     font-size: 12px;
     font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid #f7f6f3;
+    border: 2px solid var(--co-canvas-subtle);
     animation: te-bounce 0.6s 0.3s cubic-bezier(0.36, -0.04, 0.18, 1.4) both;
 }
 @keyframes te-bounce {
@@ -283,7 +282,7 @@ onBeforeUnmount(() => {
 .te-countdown-num {
     font-size: 22px;
     font-weight: 800;
-    color: #c62f2f;
+    color: var(--co-primary);
     letter-spacing: -1px;
     position: relative;
     z-index: 1;
@@ -302,7 +301,7 @@ onBeforeUnmount(() => {
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 2.5px;
-    color: #c62f2f;
+    color: var(--co-primary);
     opacity: 0.7;
 }
 .te-title {
@@ -320,7 +319,7 @@ onBeforeUnmount(() => {
 }
 .te-auto-text {
     font-size: 13px;
-    color: #c62f2f;
+    color: var(--co-primary);
     font-weight: 500;
     font-variant-numeric: tabular-nums;
 }
@@ -345,15 +344,15 @@ onBeforeUnmount(() => {
     letter-spacing: -0.1px;
 }
 .te-btn--primary {
-    background: #c62f2f;
+    background: var(--co-primary);
     color: #fff;
     border: none;
-    box-shadow: 0 4px 20px rgba(198, 47, 47, 0.32);
+    box-shadow: 0 4px 20px rgba(0, 102, 204, 0.32);
 }
 .te-btn--primary:hover {
-    background: #e04545;
+    background: var(--co-primary-focus);
     transform: translateY(-1px);
-    box-shadow: 0 6px 24px rgba(198, 47, 47, 0.4);
+    box-shadow: 0 6px 24px rgba(0, 102, 204, 0.4);
 }
 .te-btn--primary:active {
     transform: scale(0.97);
@@ -364,7 +363,7 @@ onBeforeUnmount(() => {
 .te-tips {
     width: 100%;
     background: #fff;
-    border: 1px solid #eceae6;
+    border: 1px solid var(--co-hairline);
     border-radius: 14px;
     padding: 14px 18px;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
@@ -380,7 +379,7 @@ onBeforeUnmount(() => {
     margin-bottom: 10px;
 }
 .te-tip-hd svg {
-    color: #c62f2f;
+    color: var(--co-primary);
     opacity: 0.7;
     flex-shrink: 0;
 }
@@ -407,6 +406,6 @@ onBeforeUnmount(() => {
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: rgba(198, 47, 47, 0.35);
+    background: rgba(0, 102, 204, 0.35);
 }
 </style>

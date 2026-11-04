@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ADMIN_INFO } from '/@/stores/constant/cacheKey'
 import type { AdminInfo } from '/@/stores/interface'
+import { useNavTabs } from './navTabs'
 
 export const useAdminInfo = defineStore('adminInfo', {
     state: (): AdminInfo => {
@@ -36,6 +37,7 @@ export const useAdminInfo = defineStore('adminInfo', {
             this.userid = ''
             this.project = ''
             this.super = false
+            useNavTabs().clearPermissions()
         },
 
         // adminInfo.ts - removeToken 末尾追加

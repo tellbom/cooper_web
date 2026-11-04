@@ -150,13 +150,14 @@ import {
   type AdminItem,
 } from '/@/api/backend/rbac'
 import { useAdminInfo } from '/@/stores/adminInfo'
+import { auth } from '/@/utils/common'
 
 defineOptions({ name: 'auth/projectGrant' })
 
 const adminInfo   = useAdminInfo()
 const rbacProject = RBAC_PROJECT
 const selfUserid  = computed(() => adminInfo.userid ?? '')
-const canManage   = computed(() => adminInfo.super === true)
+const canManage   = computed(() => auth('super'))
 
 // ── 搜索字段 ───────────────────────────────────────────────────
 const searchFields = [
@@ -232,6 +233,7 @@ function handleSizeChange(size: number)  { query.value.pageSize = size; query.va
 
 // ── 超管升降级 ─────────────────────────────────────────────────
 async function handleSetSuper(row: AdminItem, toSuper: boolean) {
+  if (!canManage.value) return
   const action = toSuper ? '升为超管' : '降为普通用户'
   const confirmMsg = toSuper
     ? `确定将「${row.username}」升为超管？\n超管可访问 ${rbacProject} 完整菜单，不受权限组限制，权限变更立即生效。`
@@ -245,6 +247,7 @@ async function handleSetSuper(row: AdminItem, toSuper: boolean) {
 
   loadingMap[row.userid] = true
   try {
+    if (!canManage.value) return
     await toggleProjectSuper(row.userid, { isSuper: toSuper })
     ElMessage.success(`${action}成功`)
     loadData()

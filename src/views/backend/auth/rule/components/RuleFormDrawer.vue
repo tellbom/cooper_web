@@ -203,7 +203,7 @@
     <template #footer>
       <div class="drawer-footer">
         <el-button @click="handleCancel">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">
+        <el-button type="primary" :loading="submitting" :disabled="!auth(mode === 'edit' ? 'edit' : 'add')" @click="handleSubmit">
           {{ mode === 'create' ? '创建规则' : '保存修改' }}
         </el-button>
       </div>
@@ -223,6 +223,7 @@ import {
   type RecordStatus,
 } from '/@/api/backend/rbac'
 import RuleIconSelector from './RuleIconSelector.vue'
+import { auth } from '/@/utils/common'
 
 // ── Props / Emits ──────────────────────────────────────────────
 interface Props {
@@ -431,7 +432,9 @@ function buildPermissionCode(ruleCode: string, type: string): string {
 
 // ── 提交：type 直接传后端小写值，无需转换 ────────────────────
 async function handleSubmit() {
+  if (!auth(props.mode === 'edit' ? 'edit' : 'add')) return
   try { await formRef.value.validate() } catch { return }
+  if (!auth(props.mode === 'edit' ? 'edit' : 'add')) return
 
   submitting.value = true
   try {

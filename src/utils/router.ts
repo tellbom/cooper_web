@@ -9,6 +9,44 @@ import adminBaseRoute from '/@/router/static/adminBase'
 import { i18n } from '/@/lang/index'
 import { compact, reverse } from 'lodash-es'
 
+const issuedRouteRemovers = new Set<() => void>()
+
+export function clearAdminRoutes() {
+    issuedRouteRemovers.forEach(remove => remove())
+    issuedRouteRemovers.clear()
+    useNavTabs().clearPermissions()
+}
+
+const adminPath = (path: string) => String(path || '').startsWith(adminBaseRoute.path + '/') ? path : adminBaseRoute.path + '/' + String(path || '').replace(/^\/+/, '')
+const internalPath = (raw: string) => {
+    try { const url = new URL(raw, window.location.origin); return url.origin === window.location.origin ? url.pathname : raw }
+    catch { return raw }
+}
+
+/** Only paths issued by the current RBAC menu response, including hidden routes. */
+export function hasRbacAccess(path: string, permissionPath?: string) {
+    const state = useNavTabs().state
+    return state.permissionsLoaded && state.issuedPaths.includes(permissionPath || internalPath(path))
+}
+
+export function getIssuedRouteByComponent(component: string) {
+    const state = useNavTabs().state
+    if (!state.permissionsLoaded) return undefined
+    return router.getRoutes().find(route => route.meta.sourceComponent === component && state.issuedPaths.includes(route.path))
+}
+
+function collectIssuedPaths(nodes: any[]): string[] {
+    return nodes.flatMap(node => {
+        let path = ''
+        if (node.type !== 'button') {
+            if (node.menu_type === 'link' && node.url) path = internalPath(node.url)
+            else if (node.menu_type === 'iframe' && node.url) path = adminBaseRoute.path + '/iframe/' + encodeURIComponent(node.url)
+            else if (node.menu_type === 'tab' && node.component && node.path) path = adminPath(node.path)
+        }
+        return [...(path ? [path] : []), ...collectIssuedPaths(node.children || [])]
+    })
+}
+
 /**
  * 导航失败有错误消息的路由push
  * @param to — 导航位置，同 router.push
@@ -91,9 +129,10 @@ export const onClickMenu = (menu: RouteRecordRaw) => {
  * 处理后台的路由
  */
 export const handleAdminRoute = (routes: any) => {
+    clearAdminRoutes()
     const viewsComponent = {
         ...import.meta.glob('/src/features/cooper/pages/**/*.vue'),
-        ...import.meta.glob(['/src/views/backend/auth/**/*.vue', '!/src/views/backend/auth/adminLog/**/*.vue']),
+        ...import.meta.glob('/src/views/backend/auth/**/*.vue'),
     }
     addRouteAll(viewsComponent, routes, adminBaseRoute.name as string)
     const menuAdminBaseRoute = (adminBaseRoute.path as string) + '/'
@@ -102,6 +141,8 @@ export const handleAdminRoute = (routes: any) => {
     const navTabs = useNavTabs()
     navTabs.setTabsViewRoutes(handleMenuRule(routes, menuAdminBaseRoute))
     navTabs.fillAuthNode(handleAuthNode(routes, menuAdminBaseRoute))
+    navTabs.state.issuedPaths = [...new Set(collectIssuedPaths(routes))]
+    navTabs.state.permissionsLoaded = true
 }
 
 /**
@@ -139,7 +180,7 @@ const handleMenuRule = (routes: any, pathPrefix = '/', type = ['menu', 'menu_dir
         ) {
             continue
         }
-        const currentPath = ['link', 'iframe'].includes(routes[key].menu_type) ? routes[key].url : pathPrefix + routes[key].path
+        const currentPath = ['link', 'iframe'].includes(routes[key].menu_type) ? routes[key].url : adminPath(routes[key].path)
         let children: RouteRecordRaw[] = []
         if (routes[key].children && routes[key].children.length > 0) {
             children = handleMenuRule(routes[key].children, pathPrefix, type)
@@ -155,6 +196,10 @@ const handleMenuRule = (routes: any, pathPrefix = '/', type = ['menu', 'menu_dir
                 keepalive: routes[key].keepalive,
                 menu_type: routes[key].menu_type,
                 type: routes[key].type,
+                url: routes[key].url,
+                ruleCode: routes[key].ruleCode,
+                permissionCode: routes[key].permissionCode,
+                extend: routes[key].extend,
             },
             children: children,
         })
@@ -176,9 +221,13 @@ const handleAuthNode = (routes: any, prefix = '/') => {
 const assembleAuthNode = (routes: any, authNode: Map<string, string[]>, prefix = '/', parent = '/') => {
     const authNodeTemp = []
     for (const key in routes) {
-        if (routes[key].type == 'button') authNodeTemp.push(prefix + routes[key].name)
+        if (routes[key].type == 'button') {
+            const name = String(routes[key].name || '')
+            const action = name.split('/').filter(Boolean).pop()
+            if (action) authNodeTemp.push(parent.replace(/\/$/, '') + '/' + action)
+        }
         if (routes[key].children && routes[key].children.length > 0) {
-            assembleAuthNode(routes[key].children, authNode, prefix, prefix + routes[key].name)
+            assembleAuthNode(routes[key].children, authNode, prefix, routes[key].path ? adminPath(routes[key].path) : prefix + routes[key].name)
         }
     }
     if (authNodeTemp && authNodeTemp.length > 0) {
@@ -226,7 +275,7 @@ export const addRouteItem = (viewsComponent: Record<string, any>, route: any, pa
         // ✅ 修复：正确处理子路由的相对路径
         if (parentName) {
             // 有父路由时，移除开头的 /，使其成为相对路径
-            path = route.path.replace(/^\/+/, '')
+            path = adminPath(route.path).slice(String(adminBaseRoute.path).length + 1)
         } else {
             // 没有父路由时，确保是绝对路径
             path = route.path.startsWith('/') ? route.path : '/' + route.path
@@ -273,15 +322,22 @@ export const addRouteItem = (viewsComponent: Record<string, any>, route: any, pa
             type: route.type,
             url: route.url,
             addtab: true,
+            rbacManaged: true,
+            permissionPath: adminPath(route.path),
+            sourceComponent: route.component,
+            permissionCode: route.permissionCode,
+            ruleCode: route.ruleCode,
         },
     }
 
+    if (route.menu_type === 'iframe') routeBaseInfo.meta!.permissionPath = path
+
     try {
         if (parentName) {
-            router.addRoute(parentName, routeBaseInfo)
+            issuedRouteRemovers.add(router.addRoute(parentName, routeBaseInfo))
             // console.log(`[Router] Added child route: ${route.name} (path: ${path}) to parent: ${parentName}`)
         } else {
-            router.addRoute(routeBaseInfo)
+            issuedRouteRemovers.add(router.addRoute(routeBaseInfo))
             // console.log(`[Router] Added root route: ${route.name} (path: ${path})`)
         }
     } catch (error) {

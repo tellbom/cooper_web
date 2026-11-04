@@ -144,7 +144,7 @@
         <el-button
           type="primary"
           :loading="submitting"
-          :disabled="mode === 'create' && selectedUsers.length === 0"
+          :disabled="!auth(mode === 'edit' ? 'edit' : 'add') || (mode === 'create' && selectedUsers.length === 0)"
           @click="handleSubmit"
         >
           {{ submitLabel }}
@@ -180,6 +180,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { UserFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import ContactSelector from '/@/components/ContactSelector.vue'
+import { auth } from '/@/utils/common'
 import { getDirectory, type Directory } from '/@/features/cooper/directory'
 import {
   createAdmin,
@@ -339,6 +340,7 @@ watch(
 // ── 提交 ───────────────────────────────────────────────────────
 async function handleSubmit() {
   try { await formRef.value?.validate() } catch { return }
+  if (!auth(props.mode === 'edit' ? 'edit' : 'add')) return
 
   submitting.value = true
   try {

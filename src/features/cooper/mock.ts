@@ -227,24 +227,30 @@ const STAFF: [string, string][] = [
 ]
 const WK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 const p2 = (n: number) => String(n).padStart(2, '0')
+const dutyColums: OnDutyTableResult['colums'] = [
+    ['OnDutyTime', '值班日期', 110], ['gongduan', '工段', 110], ['gongyi', '工艺', 110],
+    ['shebei', '设备', 110], ['weixiu', '维修', 110], ['xietiaozhongxin', '协调中心', 130], ['zhuanyechang', '专业厂', 120],
+].map(([prop, label, width]) => ({ prop: String(prop), label: String(label), width, align: 'left', operatortype: '', render: '' }))
 const dutyAll: Record<string, string>[] = Array.from({ length: 92 }, (_, i) => {
-    const d = new Date(2026, 9, 1 + i)
-    const leader = LEADERS[(i + 3) % 7]
-    const [staff, phone] = leader !== '张三' && i % 11 === 5 ? ['张三', '138****0027'] : STAFF[(i * 3) % STAFF.length]
-    return { 日期: `${p2(d.getMonth() + 1)}-${p2(d.getDate())}`, 星期: WK[d.getDay()], 值班领导: leader, 值班人员: staff, 联系电话: phone }
+    const d = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() - 30 + i)
+    return {
+        OnDutyTime: `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T00:00:00`,
+        gongduan: LEADERS[(i + 3) % 7], gongyi: STAFF[(i * 3) % STAFF.length][0],
+        shebei: STAFF[(i + 1) % STAFF.length][0], weixiu: STAFF[(i + 2) % STAFF.length][0],
+        xietiaozhongxin: STAFF[(i + 3) % STAFF.length][0], zhuanyechang: STAFF[(i + 4) % STAFF.length][0],
+    }
 })
 export function queryOnDuty(p: { isMySelf?: boolean; context?: string; page?: number; limit?: number } | null, username = '张三'): OnDutyTableResult {
     const personalized = dutyAll.map(row => Object.fromEntries(Object.entries(row).map(([key, value]) => [key, value === '张三' ? username : value])))
     if (!p) {
-        const list = personalized.filter((r) => r['日期'] >= '10-26' && r['日期'] <= '11-02')
-        return { total: list.length, list, columns: [], remark: '' }
+        const list = personalized.slice(27, 35)
+        return { total: list.length, list, colums: dutyColums, remark: '' }
     }
     let rows = personalized
-    if (p.isMySelf) rows = rows.filter((r) => Object.values(r).includes(username))
-    if (p.context) rows = rows.filter((r) => Object.values(r).some((v) => v.includes(p.context!)))
-    const page = p.page ?? 1,
-        limit = p.limit ?? 10
-    return { total: rows.length, list: rows.slice((page - 1) * limit, page * limit), columns: [], remark: '' }
+    if (p.isMySelf) rows = rows.filter(r => Object.values(r).includes(username))
+    if (p.context) rows = rows.filter(r => Object.values(r).some(v => v.includes(p.context!)))
+    const page = p.page ?? 1, limit = p.limit ?? 10
+    return { total: rows.length, list: rows.slice((page - 1) * limit, page * limit), colums: dutyColums, remark: '' }
 }
 
 export const meetings: MeetingInfo[] = [

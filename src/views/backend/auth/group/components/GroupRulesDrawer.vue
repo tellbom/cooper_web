@@ -172,7 +172,7 @@
         </span>
         <div class="footer-actions">
           <el-button @click="handleCancel">取消</el-button>
-          <el-button type="primary" :loading="submitting" @click="handleSubmit">
+          <el-button type="primary" :loading="submitting" :disabled="!auth('rules')" @click="handleSubmit">
             保存授权
           </el-button>
         </div>
@@ -183,6 +183,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { auth } from '/@/utils/common'
 import { Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -380,6 +381,7 @@ function getActionTagType(action: string): 'primary' | 'success' | 'warning' | '
 
 // ── 提交 ───────────────────────────────────────────────────────
 async function handleSubmit() {
+  if (!auth('rules')) return
   if (!props.target) return
 
   // check-strictly 模式下，前端勾选哪些 ruleCode 就提交哪些 ruleCode。

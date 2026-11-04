@@ -70,7 +70,7 @@
 
       <div class="action-group">
         <!-- 授权到当前 Project -->
-        <div class="action-item" v-if="!isGranted">
+        <div class="action-item" v-if="!isGranted && canGrant">
           <div class="action-item__desc">
             <div class="action-item__title">授权进入 Project</div>
             <div class="action-item__hint">允许该用户访问当前 Project 的资源</div>
@@ -86,7 +86,7 @@
         </div>
 
         <!-- 授权并设为超管 -->
-        <div class="action-item" v-if="!isGranted">
+        <div class="action-item" v-if="!isGranted && canGrant && canManageSuper">
           <div class="action-item__desc">
             <div class="action-item__title">授权并设为超管</div>
             <div class="action-item__hint">授权进入 Project 同时赋予超管权限</div>
@@ -103,7 +103,7 @@
         </div>
 
         <!-- 切换超管状态 -->
-        <div class="action-item" v-if="isGranted">
+        <div class="action-item" v-if="isGranted && canManageSuper">
           <div class="action-item__desc">
             <div class="action-item__title">{{ isSuper ? '取消超管' : '设为超管' }}</div>
             <div class="action-item__hint">
@@ -122,7 +122,7 @@
         </div>
 
         <!-- 撤销授权（高风险，红色，二次确认） -->
-        <div class="action-item action-item--danger" v-if="isGranted">
+        <div class="action-item action-item--danger" v-if="isGranted && canRevoke">
           <div class="action-item__desc">
             <div class="action-item__title">撤销 Project 授权</div>
             <div class="action-item__hint">该用户将无法访问当前 Project</div>
@@ -161,6 +161,8 @@ import {
 } from '/@/api/backend/rbac'
 import { RBAC_PROJECT } from '/@/api/backend/rbac'
 import { useAdminInfo } from '/@/stores/adminInfo'
+import { auth } from '/@/utils/common'
+import { getIssuedRouteByComponent } from '/@/utils/router'
 
 // ── Props / Emits ──────────────────────────────────────────────
 interface Props {
@@ -188,10 +190,11 @@ const visible = computed({
 const adminInfo = useAdminInfo()
 const rbacProject = RBAC_PROJECT
 
-// ── 按钮权限：只有超管才能操作超管切换 ────────────────────────
-const canManageSuper = computed(
-  () => adminInfo.super || false
-)
+const grantPage = computed(() => getIssuedRouteByComponent('/src/views/backend/auth/projectGrant/index.vue'))
+const allowed = (action: string) => !!grantPage.value && auth({ name: grantPage.value.path, subNodeName: grantPage.value.path + '/' + action })
+const canManageSuper = computed(() => allowed('super'))
+const canGrant = computed(() => allowed('add'))
+const canRevoke = computed(() => allowed('del'))
 
 // ── 派生状态：从 target 中读取当前 project 授权信息 ───────────
 const isGranted = computed(() => {
@@ -212,7 +215,7 @@ const actionLoading = ref({
 
 // ── 授权 ───────────────────────────────────────────────────────
 async function handleGrant(asSuper: boolean) {
-  if (!props.target) return
+  if (!props.target || !canGrant.value || asSuper && !canManageSuper.value) return
   const key = asSuper ? 'grantSuper' : 'grant'
   actionLoading.value[key] = true
   try {
@@ -226,7 +229,7 @@ async function handleGrant(asSuper: boolean) {
 
 // ── 超管切换 ───────────────────────────────────────────────────
 async function handleToggleSuper() {
-  if (!props.target) return
+  if (!props.target || !canManageSuper.value) return
   const toSuper = !isSuper.value
   const label = toSuper ? '设为超管' : '取消超管'
 
@@ -244,6 +247,7 @@ async function handleToggleSuper() {
 
   actionLoading.value.super = true
   try {
+    if (!canManageSuper.value) return
     await toggleProjectSuper(props.target.userid, { isSuper: toSuper })
     ElMessage.success(`${label}成功`)
     emit('refresh')
@@ -254,7 +258,7 @@ async function handleToggleSuper() {
 
 // ── 撤销授权 ───────────────────────────────────────────────────
 async function handleRevoke() {
-  if (!props.target) return
+  if (!props.target || !canRevoke.value) return
 
   try {
     await ElMessageBox.confirm(
@@ -273,6 +277,7 @@ async function handleRevoke() {
 
   actionLoading.value.revoke = true
   try {
+    if (!canRevoke.value) return
     await revokeProjectAccess(props.target.userid)
     ElMessage.success('授权已撤销')
     emit('refresh')

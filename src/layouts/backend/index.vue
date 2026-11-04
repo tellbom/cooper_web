@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, nextTick, ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useConfig } from '/@/stores/config'
 import { useNavTabs } from '/@/stores/navTabs'
 import { useAdminInfo } from '/@/stores/adminInfo'
@@ -15,12 +15,11 @@ import { useRoute } from 'vue-router'
 import Classic from '/@/features/cooper/components/PortalShell.vue'
 import { onMounted, onBeforeMount } from 'vue'
 import { Session } from '/@/utils/storage'
-import { handleAdminRoute, getFirstRoute, getMenuPaths, routePush } from '/@/utils/router'
+import { clearAdminRoutes, handleAdminRoute, getFirstRoute, hasRbacAccess } from '/@/utils/router'
 import router from '/@/router/index'
 import { adminBaseRoutePath } from '/@/router/static/adminBase'
 import { useEventListener } from '@vueuse/core'
 import { BEFORE_RESIZE_LAYOUT } from '/@/stores/constant/cacheKey'
-import { isEmpty } from 'lodash-es'
 import { setNavTabsWidth } from '/@/utils/layout'
 import { ensureKeycloakSession } from '/@/utils/keycloak'
 
@@ -50,6 +49,8 @@ onBeforeMount(() => {
 })
 
 const init = async () => {
+    authorized.value = false
+    clearAdminRoutes()
     loadError.value = ''
     const { loadRbacBackendIndex } = await import('/@/api/backend/rbac/bridge')
     const rbacIndex = await loadRbacBackendIndex()
@@ -63,7 +64,8 @@ const init = async () => {
     const normalizeMenuType = (nodes: any[]): any[] =>
         nodes.map((node) => ({
             ...node,
-            type: node.type === 'menudir' ? 'menu_dir' : node.type,
+            type: String(node.type).toLowerCase().replace('menudir', 'menu_dir'),
+            menu_type: String(node.menu_type || '').toLowerCase(),
             children: node.children?.length ? normalizeMenuType(node.children) : [],
         }))
 
@@ -71,39 +73,42 @@ const init = async () => {
 
     handleAdminRoute(menus)
 
-    const paths = new Set(getMenuPaths(navTabs.state.tabsViewRoutes))
-    if (route.meta.permissionPath && !paths.has(String(route.meta.permissionPath))) {
-        router.replace('/401')
-        return
-    }
-    authorized.value = true
-    nextTick(() => {
-        if (route.name !== 'adminMainLoading' && route.name !== 'admin') return
-        const visibleMenuPaths = new Set(getMenuPaths(navTabs.state.tabsViewRoutes))
-        // 预跳转到上次路径
+    if (route.name === 'adminMainLoading' || route.name === 'admin') {
         if (route.params.to) {
             try {
                 const lastRoute = JSON.parse(route.params.to as string)
-                if (lastRoute.path !== adminBaseRoutePath && visibleMenuPaths.has(lastRoute.path)) {
-                    const query = !isEmpty(lastRoute.query) ? lastRoute.query : {}
-                    routePush({ path: lastRoute.path, query })
+                const target = router.resolve({ path: lastRoute.path, query: lastRoute.query || {} })
+                if (hasRbacAccess(target.path, String(target.meta.permissionPath || target.path))) {
+                    await router.replace({ path: target.path, query: target.query })
+                    authorized.value = true
                     return
                 }
             } catch (error) {
                 console.warn('[layout] ignored invalid restored route', error)
             }
+            await router.replace('/401')
+            return
         }
-
-        // 跳转到第一个菜单
+        const supplied = router.resolve(adminBaseRoutePath + '/' + String(rbacIndex.routePath || '').replace(/^\/+/, '').replace(/^cooper\//, ''))
         const firstRoute = getFirstRoute(navTabs.state.tabsViewRoutes)
-        if (firstRoute) {
-            routePush(firstRoute.path)
-        }
-    })
+        const target = hasRbacAccess(supplied.path, String(supplied.meta.permissionPath || supplied.path)) ? supplied.path : firstRoute ? firstRoute.path : undefined
+        if (!target) { loadError.value = '当前账号没有可访问的页面'; return }
+        await router.replace(target)
+        authorized.value = true
+        return
+    }
+    const target = router.resolve({ path: route.path, query: route.query, hash: route.hash })
+    if (!hasRbacAccess(target.path, String(target.meta.permissionPath || target.path))) {
+        await router.replace('/401')
+        return
+    }
+    await router.replace({ path: target.path, query: target.query, hash: target.hash, force: true })
+    authorized.value = true
 }
 
-watch(() => route.meta.permissionPath, path => {
-    if(authorized.value && path && !new Set(getMenuPaths(navTabs.state.tabsViewRoutes)).has(String(path))) router.replace('/401')
+watch(() => [route.fullPath, navTabs.state.permissionsLoaded, navTabs.state.issuedPaths], () => {
+    if (!navTabs.state.permissionsLoaded) { authorized.value = false; return }
+    if (authorized.value && !hasRbacAccess(route.path, String(route.meta.permissionPath || route.path))) router.replace('/401')
 })
 
 const onAdaptiveLayout = () => {

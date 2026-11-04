@@ -1,20 +1,24 @@
 <template>
-    <span class="duty-cell"
-        ><template v-if="column === '日期'"
-            ><span :class="{ blue: today, semibold: today }">{{ value }}</span
-            ><em v-if="today" class="today-badge">今日</em></template
-        ><template v-else-if="column === '星期'"
-            ><span :class="/[六日]/.test(value) ? 'amber' : 'muted'">{{ value }}</span></template
-        ><template v-else-if="column.includes('值班')"
-            ><i class="person-initial">{{ value.slice(0, 1) }}</i
-            ><span :class="{ blue: value === username, semibold: value === username }">{{ value }}</span
-            ><em v-if="value === username" class="me-badge">我</em></template
-        ><template v-else-if="column.includes('电话')"
-            ><Phone :size="11" /><span>{{ value }}</span></template
-        ><template v-else>{{ value }}</template></span
-    >
+    <span class="duty-cell">
+        <template v-if="column.prop === 'OnDutyTime'">
+            <span :class="{ blue: today, semibold: today }">{{ dateLabel }}</span>
+            <em v-if="today" class="today-badge">今日</em>
+        </template>
+        <template v-else-if="isDutyPerson(column.prop) && value">
+            <i class="person-initial">{{ text.slice(0, 1) }}</i>
+            <span :class="{ blue: mine, semibold: mine }">{{ text }}</span>
+            <em v-if="mine" class="me-badge">我</em>
+        </template>
+        <template v-else>{{ text }}</template>
+    </span>
 </template>
 <script setup lang="ts">
-import { Phone } from 'lucide-vue-next'
-defineProps<{ column: string; value: string; today?: boolean; username?: string }>()
+import { computed } from 'vue'
+import { dutyDate, dutyText, isDutyPerson } from '../onDuty'
+import type { OnDutyColumn } from '../types'
+
+const props = defineProps<{ column: OnDutyColumn; value?: string | null; today?: boolean; username?: string }>()
+const text = computed(() => dutyText(props.value)),
+    mine = computed(() => !!props.username && props.value === props.username),
+    dateLabel = computed(() => dutyDate({ OnDutyTime: props.value ?? null })?.format('MM-DD') ?? text.value)
 </script>

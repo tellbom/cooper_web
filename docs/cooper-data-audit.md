@@ -1,6 +1,6 @@
 # 数据来源与切换正式接口核查
 
-本次以根目录 API 文档及 2026-11-01 用户补充为依据，检查 Cooper 当前菜单可达的首页、二级弹窗、新闻、检索、预览和权限中心。内网业务服务未实连；以下描述的是源代码映射及本地受控验证，不代表真实后端已验收。
+本次以根目录 API 文档及 2026-11-02 用户补充为依据，检查 Cooper 当前菜单可达的首页、二级弹窗、新闻、检索、预览和权限中心。内网业务服务未实连；以下描述的是源代码映射及本地受控验证，不代表真实后端已验收。
 
 ## 业务数据来源
 
@@ -15,7 +15,7 @@
 | 领导日程 | newOA `GET /api/app/leader-schedule/by-time` 的 `data` | 领导姓名、活动与起止时间 |
 | 我的日程 | `/api/calendar/events` 的 GET/POST/PATCH/DELETE | 日程记录及编辑结果；Element Plus 日期时间区间分别提交 `startAt/endAt`，支持跨日、跨月、跨年。新建初始时分属于表单默认值 |
 | 常用系统、应用中心 | `/api/app/personal/common-system-show-list`、`/api/app/customization/index` | 名称、描述、图标、跳转地址、个人选择与排序 |
-| 值班信息、值班安排 | `GET /api/app/on-duty/get-list` 的 `data.list/total` | 动态列及人员信息；“我”使用真实登录用户姓名，组件中没有“张三”默认值 |
+| 值班信息、值班安排 | `GET /api/app/on-duty/get-list` 的 `data.colums/list/remark/total` | 列名、顺序、对齐及宽度来自 `colums`；日期 `OnDutyTime`，人员使用生产岗位字段；动态列及人员信息；“我”使用真实登录用户姓名，组件中没有“张三”默认值 |
 | 会议动态 | newOA `GET /api/app/apply-meeting/passed-room` 的 `data` | 会议、地点、起止时间；状态由实际当前时间计算，不使用固定演示日期 |
 | 危险作业 | `GET /api/app/hot-work` 的 `data.list/total` | `workType` 作业类型、`hazardousWorkArea` 区域、`plant/className`、时间、责任人和电话；不再包装为技改项目 |
 | 右下角设备故障 | `GET /api/app/fault/get-fault-table-message` 的 `list`（兼容直返数组） | `SMBC` 设备名称、`SS_GZNR` 故障说明、`GZFS_SJ` 发生时间、`State` 状态 |
@@ -37,7 +37,7 @@
 
 ## 内网切换
 
-1. `.env.production` 保持 `VITE_COOPER_USE_MOCK=false`、`VITE_COCHAIN_USE_MOCK=false`，重新构建。无需删除 Mock 源文件；生产 Cooper 业务请求不会进入 Mock 分支。
+1. `.env.production` 保持 `VITE_COOPER_USE_MOCK=false`，重新构建。无需删除 Mock 源文件；生产 Cooper 业务请求不会进入 Mock 分支。旧 Cochain Mock 开关及未接入的 Cochain 页面已清理。
 2. 使用同域反向代理时保留 `VITE_*_API_BASE_URL` 的本地前缀，并配置 Web 服务器反代。使用直连时，将这些变量填写为 API 文档中对应的完整网关地址；末尾不带 `/api`，代码继续拼接接口路径。`VITE_*_API_TARGET` 只控制开发服务器代理，不能用于替代生产配置。
 
 | 生产变量 | 文档中的完整网关地址参考 |

@@ -11,12 +11,13 @@
     </div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { DataAnalysis } from '@element-plus/icons-vue'
 import { safeLink } from '../links'
 import LoadState from '../components/LoadState.vue'
 const route = useRoute(),
     loaded = ref(false)
-const url = computed(() => safeLink(String(import.meta.env[`VITE_COOPER_${String(route.path.split('/').pop()).toUpperCase()}_URL`] || '')))
+const url = computed(() => safeLink(String(route.meta.url || '')))
+watch(url, () => { loaded.value = false })
 </script>

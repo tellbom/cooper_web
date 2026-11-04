@@ -1,3 +1,4 @@
+-- Historical bootstrap/upgrade. Production metadata import: use cooper-production-dm.sql.
 -- Reuse the existing permission-center definitions; project scope is cooper only.
 WHENEVER SQLERROR EXIT ROLLBACK;
 INSERT INTO "rbac_rule" ("id","project","rule_code","permission_code","parent_rule_code","type","title","name","path","icon","menu_type","url","component","extend","remark","keepalive","weigh","status") SELECT '939ff718-59e2-585b-a1d6-fb6d271875e7','cooper',r."rule_code",r."permission_code",r."parent_rule_code",r."type",r."title",r."name",r."path",r."icon",r."menu_type",r."url",r."component",r."extend",r."remark",r."keepalive",r."weigh",r."status" FROM "rbac_rule" r WHERE r."project"='cochain' AND r."rule_code"='auth' AND NOT EXISTS (SELECT 1 FROM "rbac_rule" x WHERE x."project"='cooper' AND x."rule_code"=r."rule_code");

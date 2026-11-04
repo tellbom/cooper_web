@@ -1,7 +1,7 @@
 <template>
     <div class="iframe-main" v-loading="state.loading">
         <iframe
-            :src="state.iframeSrc"
+            :src="iframeSrc"
             :style="iframeStyle(35)"
             frameborder="0"
             height="100%"
@@ -14,16 +14,18 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { mainHeight as iframeStyle } from '/@/utils/layout'
-import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
+import { safeLink } from '/@/features/cooper/links'
 
-const router = useRouter()
+const route = useRoute()
+const iframeSrc = computed(() => safeLink(String(route.meta.url || '')))
 
 const state = reactive({
     loading: true,
-    iframeSrc: router.currentRoute.value.meta.url as string,
 })
+watch(iframeSrc, () => { state.loading = true })
 
 const hideLoading = () => {
     state.loading = false

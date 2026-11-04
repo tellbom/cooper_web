@@ -10,7 +10,9 @@ import { Bell } from 'lucide-vue-next'
 import { useAdminInfo } from '/@/stores/adminInfo'
 import { getPopupnoticeapi, type CooperNotice } from '../api'
 import { portalEvents } from '../realtime'
+import { useNavTabs } from '/@/stores/navTabs'
 const admin = useAdminInfo(),
+    navTabs = useNavTabs(),
     route = useRoute(),
     pending = ref<CooperNotice[]>([]),
     blocked = ref(false)
@@ -18,6 +20,7 @@ const allowed = computed(
     () =>
         !!admin.token &&
         admin.project === 'cooper' &&
+        navTabs.state.permissionsLoaded && navTabs.state.issuedPaths.includes('/preview/notice') &&
         !route.path.startsWith('/preview/') &&
         route.path !== '/notice-popup' &&
         route.path !== '/login' &&
@@ -48,7 +51,7 @@ function openWindow() {
         return
     }
     localStorage.setItem(leaseKey, JSON.stringify({ owner, expires: Date.now() + 12000 }))
-    popup = window.open(`/notice-popup?owner=${encodeURIComponent(owner)}`, '_blank', 'popup=yes,width=500,height=500,resizable=yes,scrollbars=yes')
+    popup = window.open(`/notice-popup?owner=${encodeURIComponent(owner)}`, '_blank', 'popup=yes,width=600,height=550,resizable=yes,scrollbars=yes')
     attempted = true
     blocked.value = !popup
     if (!popup) release()

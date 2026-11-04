@@ -98,7 +98,6 @@ export function startRealtime(user: string) {
     if (!user || runningUser === user) return
     stopRealtime()
     runningUser = user
-    if (USE_MOCK) return
     const url = import.meta.env.VITE_PROXY_MQTT as string
     if (url) {
         const bytes = new Uint8Array(4)
@@ -127,6 +126,8 @@ export function startRealtime(user: string) {
             /* MQTT handles reconnection; do not log payloads or tokens. */
         })
     }
+    // Explicitly configured MQTT remains live while business HTTP data uses Mock.
+    if (USE_MOCK) return
     void getReminders()
         .then((rows) => {
             if (runningUser === user) rows.forEach((n) => void notifyReminder(n))

@@ -42,7 +42,7 @@
 
             <!-- 文字区 -->
             <div class="np-text">
-                <div class="np-code">403</div>
+                <div class="np-code">401</div>
                 <h1 class="np-title">暂无访问权限</h1>
                 <p class="np-desc">
                     您当前的账号没有访问此页面的权限。<br />
@@ -103,7 +103,7 @@
             <!-- 底部联系信息 -->
             <p class="np-contact">
                 如有疑问请联系
-                <a href="mailto:admin@example.com" class="np-link">系统管理员</a>
+                <span class="np-link">系统管理员</span>
             </p>
         </div>
     </div>
@@ -115,14 +115,14 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 function goHome() {
-    router.push('/')
+    router.replace('/cooper/home')
 }
 
 function goBack() {
     if (window.history.length > 1) {
         router.go(-1)
     } else {
-        router.push('/')
+        router.replace('/cooper/home')
     }
 }
 </script>
@@ -135,8 +135,8 @@ function goBack() {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f5f4f2;
-    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    background: var(--co-canvas-subtle);
+    font-family: var(--co-font-family);
     overflow: hidden;
     z-index: 9999;
 }
@@ -156,14 +156,14 @@ function goBack() {
 .np-bg-circle--1 {
     width: 560px;
     height: 560px;
-    background: #c62f2f;
+    background: var(--co-primary);
     top: -160px;
     right: -120px;
 }
 .np-bg-circle--2 {
     width: 380px;
     height: 380px;
-    background: #c62f2f;
+    background: var(--co-primary);
     bottom: -140px;
     left: -80px;
     opacity: 0.04;
@@ -171,7 +171,7 @@ function goBack() {
 .np-bg-circle--3 {
     width: 200px;
     height: 200px;
-    background: #8b1a1a;
+    background: var(--co-primary-hover);
     top: 40%;
     left: 10%;
     opacity: 0.03;
@@ -220,7 +220,7 @@ function goBack() {
 .np-icon-ring {
     position: absolute;
     border-radius: 50%;
-    border: 1.5px solid rgba(198, 47, 47, 0.18);
+    border: 1.5px solid rgba(0, 102, 204, 0.18);
     animation: np-pulse 3s ease-in-out infinite;
 }
 .np-icon-ring--outer {
@@ -231,7 +231,7 @@ function goBack() {
 .np-icon-ring--inner {
     width: 72px;
     height: 72px;
-    border-color: rgba(198, 47, 47, 0.25);
+    border-color: rgba(0, 102, 204, 0.25);
     animation-delay: 0.4s;
 }
 @keyframes np-pulse {
@@ -251,12 +251,12 @@ function goBack() {
     border-radius: 16px;
     background: #fff;
     box-shadow:
-        0 2px 20px rgba(198, 47, 47, 0.14),
+        0 2px 20px rgba(0, 102, 204, 0.14),
         0 1px 4px rgba(0, 0, 0, 0.06);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #c62f2f;
+    color: var(--co-primary);
     z-index: 1;
 }
 
@@ -272,9 +272,9 @@ function goBack() {
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 3px;
-    color: #c62f2f;
-    background: rgba(198, 47, 47, 0.08);
-    border: 1px solid rgba(198, 47, 47, 0.15);
+    color: var(--co-primary);
+    background: rgba(0, 102, 204, 0.08);
+    border: 1px solid rgba(0, 102, 204, 0.15);
     padding: 4px 12px;
     border-radius: 20px;
 }
@@ -315,11 +315,11 @@ function goBack() {
     width: 22px;
     height: 22px;
     border-radius: 6px;
-    background: rgba(198, 47, 47, 0.08);
+    background: rgba(0, 102, 204, 0.08);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #c62f2f;
+    color: var(--co-primary);
     flex-shrink: 0;
 }
 .np-info-text {
@@ -350,15 +350,15 @@ function goBack() {
     letter-spacing: -0.1px;
 }
 .np-btn--primary {
-    background: #c62f2f;
+    background: var(--co-primary);
     color: #fff;
     border: none;
-    box-shadow: 0 2px 12px rgba(198, 47, 47, 0.3);
+    box-shadow: 0 2px 12px rgba(0, 102, 204, 0.3);
 }
 .np-btn--primary:hover {
-    background: #e04545;
+    background: var(--co-primary-focus);
     transform: translateY(-1px);
-    box-shadow: 0 4px 18px rgba(198, 47, 47, 0.36);
+    box-shadow: 0 4px 18px rgba(0, 102, 204, 0.36);
 }
 .np-btn--primary:active {
     transform: scale(0.97);
@@ -385,7 +385,7 @@ function goBack() {
     color: #aaa;
 }
 .np-link {
-    color: #c62f2f;
+    color: var(--co-primary);
     text-decoration: none;
     font-weight: 500;
 }

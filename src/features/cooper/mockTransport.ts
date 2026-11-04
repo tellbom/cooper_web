@@ -104,7 +104,7 @@ export async function mockRequest(gateway: Gateway, path: string, options: Reque
             )
         }
         case 'Cooper GET /api/app/on-duty/get-list':
-            return envelope(data.queryOnDuty(options.query as never, getActivePinia() ? (useAdminInfo().nickname || useAdminInfo().username) : undefined))
+            return { Count: 0, arr: [], code: 1, data: data.queryOnDuty(options.query as never, getActivePinia() ? (useAdminInfo().nickname || useAdminInfo().username) : undefined), msg: '成功', time: Date.now() }
         case 'newOA GET /api/app/apply-meeting/passed-room':
             return envelope(data.meetings)
         case 'Cooper GET /api/app/fault/get-fault-table-message':

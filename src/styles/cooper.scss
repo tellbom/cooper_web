@@ -49,7 +49,7 @@
         list-style: none;
         padding: 0;
     }
-    button {
+    button:where(:not(.el-button):not(.btn-prev):not(.btn-next)) {
         cursor: pointer;
         font: inherit;
         color: inherit;
@@ -57,7 +57,7 @@
         background: none;
         padding: 0;
     }
-    button:disabled {
+    button:where(:not(.el-button)):disabled {
         cursor: default;
         opacity: 0.45;
     }
@@ -66,10 +66,10 @@
         text-decoration: none;
     }
     a:hover,
-    button:where(:not(.active):not(.selected):not([aria-pressed='true']):not(.el-button--primary):not(:disabled)):hover {
+    button:where(:not(.el-button):not(.btn-prev):not(.btn-next):not(.active):not(.selected):not([aria-pressed='true']):not(:disabled)):hover {
         color: var(--p-brand);
     }
-    button:focus-visible,
+    button:where(:not(.el-button)):focus-visible,
     a:focus-visible {
         outline: 2px solid #2563eb;
         outline-offset: 3px;

@@ -1,6 +1,7 @@
 import DOMPurify from 'dompurify'
-import { http, USE_VECTOR_SEARCH } from './http'
+import { http } from './http'
 import type * as T from './types'
+import { normalizeOnDuty } from './onDuty'
 export * from './types'
 type Envelope<T> = { data: T; arr: T[]; count: number }
 export const getnewsimgApi = (query: Record<string, unknown>) => http<T.NewsListDto[]>('Cooper', '/api/app/news', { query })
@@ -13,7 +14,7 @@ export const getPopupnoticeapi = () => http<T.CooperNotice[]>('Cooper', '/api/ap
 export const getnoticesApi = (query: { Pageindex: number; Pagesize: number; startTime?: string; endTime?: string; keyword?: string }) =>
     http<Envelope<T.CooperNotice[]>>('Cooper', '/api/app/notice', { query })
 export const getOnDutyList = async (query?: { isMySelf?: boolean; context?: string; page?: number; limit?: number }) =>
-    (await http<Envelope<T.OnDutyTableResult>>('Cooper', '/api/app/on-duty/get-list', { query })).data
+    normalizeOnDuty((await http<Envelope<T.OnDutyTableResult>>('Cooper', '/api/app/on-duty/get-list', { query })).data)
 export const getmeetingInfos = async () => (await http<Envelope<T.MeetingInfo[]>>('newOA', '/api/app/apply-meeting/passed-room')).data
 function faultRows<T>(raw: T[] | { list: T[] }, fields: string[]): T[] {
     const rows = Array.isArray(raw) ? raw : raw?.list
@@ -83,51 +84,8 @@ export const myMessages = () => collectInbox(async page =>
 export const readMessage = (id: string) =>
     http<void>('MessageCenter', `/api/message-center/messages/${encodeURIComponent(id)}/read`, { method: 'POST' })
 export type SearchView = { displayMode: 'results'; data: T.SearchResponse } | { displayMode: 'days'; data: T.DayGroupedSearchResponse }
-interface VectorResponse {
-    searchTraceId: string
-    searchMode: string
-    page: number
-    pageSize: number
-    hasMore: boolean
-    maxDepthReached: boolean
-    items: Array<{
-        newsId: string; title: string; sourceType: string; publishTime: string
-        publisher?: string; author?: string; url?: string
-        matchedChunks: Array<{ text: string; highlight?: string[] }>
-    }>
-}
-function dayBoundary(value: string, end: boolean) {
-    const timestamp = Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00+08:00` : value)
-    if (!Number.isFinite(timestamp)) throw new Error('日期格式不正确')
-    return timestamp + (end && /^\d{4}-\d{2}-\d{2}$/.test(value) ? 86400000 : 0)
-}
-async function vectorSearch(body: T.DayGroupedSearchRequest): Promise<SearchView> {
-    const data = await http<VectorResponse>('aura', body.query.trim() ? '/api/v1/search' : '/api/v1/browse', {
-        method: 'POST',
-        body: {
-            query: body.query, sourceTypes: body.sourceTypes, page: body.page, pageSize: body.pageSize,
-            ...(body.publishTimeFrom ? { publishTimeFromMs: dayBoundary(body.publishTimeFrom, false) } : {}),
-            ...(body.publishTimeTo ? { publishTimeToMs: dayBoundary(body.publishTimeTo, true) } : {}),
-        },
-    })
-    return { displayMode: 'results', data: {
-        searchTraceId: data.searchTraceId, searchMode: data.searchMode, degraded: false, degradationMode: null,
-        maxDepthReached: data.maxDepthReached, page: data.page, pageSize: data.pageSize, hasMore: data.hasMore,
-        results: data.items.map(item => {
-            const sourceType = item.sourceType.toLowerCase()
-            if (sourceType !== 'news' && sourceType !== 'announcement') throw new Error('检索结果来源类型不正确')
-            return {
-                newsId: item.newsId, title: item.title, sourceType: sourceType === 'news' ? 'News' : 'Announcement',
-                publisher: item.publisher || '', author: item.author || '', publishTime: item.publishTime,
-                highlight: item.matchedChunks.flatMap(chunk => chunk.highlight || []).join(' … ') || null,
-                summary: item.matchedChunks.map(chunk => chunk.text).join(' … '), contentHtml: null, cover: null,
-                url: item.url, vectorResult: true,
-            }
-        }),
-    } }
-}
 export const searchNews = (body: T.DayGroupedSearchRequest): Promise<SearchView> =>
-    USE_VECTOR_SEARCH ? vectorSearch(body) : body.query.trim()
+    body.query.trim()
         ? http<T.SearchResponse>('aura', '/api/search/search', { method: 'POST', body }).then((data) => ({ displayMode: 'results' as const, data }))
         : http<T.DayGroupedSearchResponse>('aura', '/api/search/day-grouped', { method: 'POST', body }).then((data) => ({
               displayMode: 'days' as const,

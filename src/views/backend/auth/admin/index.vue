@@ -125,14 +125,15 @@ import {
   type AdminItem,
 } from '/@/api/backend/rbac'
 import { useAdminInfo } from '/@/stores/adminInfo'
+import { auth } from '/@/utils/common'
 
 defineOptions({ name: 'auth/admin' })
 
 const adminInfo     = useAdminInfo()
 const currentUserid = computed(() => adminInfo.userid ?? '')
-const canCreate     = computed(() => adminInfo.super === true)
-const canEdit       = computed(() => adminInfo.super === true)
-const canDelete     = computed(() => adminInfo.super === true)
+const canCreate     = computed(() => auth('add'))
+const canEdit       = computed(() => auth('edit'))
+const canDelete     = computed(() => auth('del'))
 
 const searchFields = [
   { prop: 'keyword',   label: '关键字', type: 'input',  placeholder: '用户ID / 显示名称', width: '220px' },
@@ -190,9 +191,11 @@ const selectedRows = ref<AdminItem[]>([])
 function handleSelectionChange(rows: AdminItem[]) { selectedRows.value = rows }
 
 function openCreate() {
+  if (!canCreate.value) return
   formMode.value = 'create'; currentRow.value = null; formDrawerVisible.value = true
 }
 function openEdit(row: AdminItem) {
+  if (!canEdit.value) return
   formMode.value = 'edit'; currentRow.value = { ...row }; formDrawerVisible.value = true
 }
 function handleFormSubmit() {
@@ -200,12 +203,14 @@ function handleFormSubmit() {
 }
 
 async function handleDelete(row: AdminItem) {
+  if (!canDelete.value) return
   try {
     await ElMessageBox.confirm(
       `确定删除管理员「${row.username}」（${row.userid}）？`,
       '删除确认',
       { confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'warning' }
     )
+    if (!canDelete.value) return
     await deleteAdmin(row.userid)
     ElMessage.success('删除成功')
     loadData()
@@ -215,12 +220,14 @@ async function handleDelete(row: AdminItem) {
 }
 
 async function handleBatchDelete(rows: AdminItem[]) {
+  if (!canDelete.value) return
   try {
     await ElMessageBox.confirm(
       `确定批量删除选中的 ${rows.length} 位管理员？`,
       '批量删除确认',
       { confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'warning' }
     )
+    if (!canDelete.value) return
     await Promise.all(rows.map(r => deleteAdmin(r.userid)))
     ElMessage.success(`已删除 ${rows.length} 位管理员`)
     loadData()

@@ -14,17 +14,17 @@ Node 16.20.2 用于构建与类型检查；浏览器输出目标为 Chrome 109�
 
 设计依据为 `figma/src` 的本地导出稿，主应用不引入 React 或 Tailwind。Noto Sans SC 和 Noto Serif SC 字体及原型演示图片已本地化；字体许可保存在 `public/fonts`。页面包含首页、新闻列表/详情、按日资讯检索、应用中心、值班、危险作业、故障及日程的二级界面。
 
-原型顶部另外五个看板只有导航外观，没有提供其页面设计与完整外部链接。保留既有 iframe 形式的入口，分别通过 `VITE_COOPER_DATA_URL`、`VITE_COOPER_HOURS_URL`、`VITE_COOPER_LOSS_URL`、`VITE_COOPER_QUALITY_URL`、`VITE_COOPER_DNC_URL` 配置；未配置时显示明确的空态。应用中心“更多资源”提供软件下载、表格下载；按本轮要求移除关注订阅入口。荣誉墙不再打开本地弹窗，直接跳转外部网站，地址在 `src/features/cooper/components/OperationsPanels.vue` 的 `honorSiteUrl` 常量中填写，不新增环境配置项。
+原型顶部另外五个看板只有导航外观，没有提供其页面设计与完整外部链接。保留既有 iframe 形式的入口，地址通过 RBAC 对应菜单的 `url` 字段颁发；未配置时显示明确的空态。应用中心“更多资源”提供软件下载、表格下载；按本轮要求移除关注订阅入口。荣誉墙不再打开本地弹窗，直接跳转外部网站，地址在 `src/features/cooper/components/OperationsPanels.vue` 的 `honorSiteUrl` 常量中填写，不新增环境配置项。
 
 ## 身份、菜单与数据库
 
 沿用 Keycloak -> RBAC 登录桥接 -> `/api/admin/index` -> `handleAdminRoute` 的原链路。客户端和 `X-Project` 为 `cooper`。门户规则与现有权限中心规则写入 cooper 项目；管理员、权限组、菜单规则、接口映射与项目授权页面复用原有代码。
 
-`sql/cooper-menu-dm.sql` 初始化门户，`sql/cooper-auth-menu-dm.sql` 复用既有权限中心定义和 API 映射。通过指定的 DIsql 执行并回读。脚本使用 `PORTAL_USERID` 参数；包含 UserChanged 事件时还需定义相应用户的 `PORTAL_USER_GUID`。管理员组与门户成员组分开，初始项目授权不设置 super。没有更改其他项目的数据。
+生产菜单导入使用 `sql/cooper-production-dm.sql`，独立初始化 40 条规则和 33 条 API 映射，不依赖其他项目，也不导入用户、权限组成员或项目授权。已有菜单仅调整三个预览时使用 `sql/cooper-preview-hidden-dm.sql`。正式账号继续通过现有 RBAC 授权；执行顺序、历史脚本区别及达梦实测记录见 `sql/README.md`。
 
-三个预览菜单是到静态路由的链接，仍根据 RBAC 返回的可见菜单进行访问检查。新账号、菜单权限和接口访问权限继续由已有鉴权中心管理。
+三个预览节点均为 `add_rules_only` 隐藏规则，通过 Link 地址映射到静态预览路由，仍根据 RBAC 当前颁发的路径进行访问检查。新账号、菜单权限和接口访问权限继续由已有鉴权中心管理。
 
-本次通过 DIsql 回读：cooper 项目 31 条菜单/按钮规则、33 条 API 映射，74 条 Outbox 事件均为 Succeeded；浏览器中的现有菜单规则列表返回 31 条。数据库记录、权限投影与页面入口分别核验。
+初次初始化为 31 条菜单/按钮规则。2026-11-02 通过 `sql/cooper-rbac-ui-dm.sql` 补齐 9 个原本缺失的按钮节点，回读为 40 条，真实 `/api/admin/index` 已颁发新增节点；cooper 权限组和项目授权记录数量均保持 2 条。脚本只写 cooper 规则和 MenuChanged Outbox，不修改用户、权限组或项目授权，新闻详情可见性使用 RBAC 的 `add_rules_only`。详见 `docs/cooper-rbac-duty-verification.md`。
 
 ## API 与 Mock
 
@@ -32,7 +32,7 @@ API 位于 `src/features/cooper/api.ts`，DTO 保留文档大小写。Mock 在�
 
 `VITE_COOPER_USE_MOCK=true` 启用演示数据，`VITE_COOPER_MOCK_DELAY` 默认为 850ms，另加 0–250ms 抖动。开发页面加 `?mockDelay=3000` 可检查慢加载；`?mockError=all` 或 `?mockError=/api/app/news` 可检查整体/单模块失败。
 
-API 文档未给出点赞、记录浏览的 POST 请求体，采用原型中的 `{ newsId }`，集中在 `likeFeatureBody` 适配器，须在真实后端联调时确认。预览 HTML 返回 DTO、值班 columns 定义等文档未明确的部分不宣称已完成后端验收。
+API 文档未给出点赞、记录浏览的 POST 请求体，采用原型中的 `{ newsId }`，集中在 `likeFeatureBody` 适配器，须在真实后端联调时确认。预览 HTML 返回 DTO 等文档未明确的部分不宣称已完成后端验收。生产值班结构已按用户补充对齐 `data.colums/list/remark/total`，真实业务接口仍须内网联调。
 
 开发模式可通过以下变量配置各业务网关。值填完整的上游网关地址，Vite 代理去掉本地前缀后转发；生产部署需在 Web 服务器配置同等反向代理。业务服务地址尚未确认时使用延迟 Mock，不将开发代理当作已完成的后端联调。
 
@@ -59,7 +59,7 @@ API 文档未给出点赞、记录浏览的 POST 请求体，采用原型中的 
 
 ## 实时连接
 
-`VITE_PROXY_MQTT` 配置真实 WS/WSS Broker。协议为 MQTT v3.1.1，订阅 `cooper/publish`，消息合并后只刷新新闻和公告；用户主题用于退出登录。退出或用户改变时释放连接。文档没有可确认的 Broker 路径和踢人 payload，本次不宣称完成内网 MQTT 联调。
+`VITE_PROXY_MQTT` 配置真实 WS/WSS Broker（已核实当前 EMQX 的 WS 路径为 `/mqtt`）。协议为 MQTT v3.1.1，订阅 `cooper/publish`，250ms 内消息合并后刷新首页新闻、当前栏目列表、当前新闻详情及公告；用户主题用于退出登录。显式配置 Broker 后，业务 HTTP 使用 Mock 时也能接入真实 MQTT；Mock 日历仍不启动 SSE。退出或用户改变时释放连接。2026-11-04 完成真实 EMQX、TCP 发布端、浏览器 WS 订阅端和临时 HTTP 后端的 13 项联调检查；正式内网业务后端及踢人消息未纳入本次测试。详见 `docs/cooper-mqtt-verification.md`。
 
 Calendar 保持独立 fetch 客户端及 SSE 端点，包含 Bearer、分帧解析、取消、退避重连、日程刷新和提醒处理。Mock 下不连接内网 Broker/SSE，日程修改仍走相同 API 层。
 
@@ -83,7 +83,7 @@ Calendar 保持独立 fetch 客户端及 SSE 端点，包含 Bearer、分帧解�
 
 已完成 Node 16 类型检查、23 个新 Vue 模板编译、22 项 API/Mock 契约检查，以及生产包 `dist` 和业务 Mock 包 `dist-mock` 构建。本轮浏览器验收通过 28 项主流程、12 项公告、16 项截图与交互检查，以及 6 项关闭 Mock 的生产边界检查；覆盖真实登录/菜单、窗口去重、各二级界面、日程操作、附件到真实 OnlyOffice、慢加载、故障字段、消息跳转、接口空态和失败。生产边界使用受控 HTTP 响应，不代表真实内网业务服务联调。此前另有 15 项补充及 11 项交互检查，属于上一轮记录。
 
-上述业务页面交互使用延迟 Mock；身份、菜单和 OnlyOffice 使用现有真实服务。真实业务 API、MQTT/SSE 网络连接及 Win7 真机尚未验收。顶部五个外部看板的内容设计与服务链接仍需由对应系统提供。
+上述业务页面交互使用延迟 Mock；身份、菜单和 OnlyOffice 使用现有真实服务。真实业务 API、SSE 网络连接及 Win7 真机尚未验收；MQTT 后续联调结果见上述专项记录。顶部五个外部看板的内容设计与服务链接仍需由对应系统提供。
 
 数据来源逐项核查、用户核正的故障字段/路径及内网切换说明见 `docs/cooper-data-audit.md`。
 

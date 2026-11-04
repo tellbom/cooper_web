@@ -64,10 +64,19 @@ export interface MeetingInfo {
     startTime: string
     endTime: string
 }
+export interface OnDutyColumn {
+    prop: string
+    label: string
+    align?: 'left' | 'center' | 'right'
+    width?: number | string
+    operatortype?: unknown
+    render?: unknown
+}
+export type OnDutyRow = Record<string, string | null>
 export interface OnDutyTableResult {
     total: number
-    list: Array<Record<string, string>>
-    columns: unknown[]
+    list: OnDutyRow[]
+    colums: OnDutyColumn[]
     remark: string
 }
 export interface FaultDto {
@@ -167,8 +176,6 @@ export interface DayGroupedSearchRequest {
     pageSize: number
 }
 export interface SearchItem {
-    url?: string
-    vectorResult?: boolean
     newsId: string
     title: string
     highlight: string | null
@@ -202,7 +209,6 @@ export interface DayGroupedSearchResponse extends SearchMeta {
     days: SearchDayGroup[]
 }
 export interface SearchResponse extends SearchMeta {
-    hasMore?: boolean
     results: SearchItem[]
 }
 

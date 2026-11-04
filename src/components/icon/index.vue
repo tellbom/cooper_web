@@ -1,5 +1,5 @@
 <script lang="ts">
-import { createVNode, resolveComponent, defineComponent, computed, type CSSProperties } from 'vue'
+import { createVNode, getCurrentInstance, defineComponent, computed, type CSSProperties } from 'vue'
 export default defineComponent({
     name: 'Icon',
     props: {
@@ -17,6 +17,7 @@ export default defineComponent({
         },
     },
     setup(props) {
+        const instance = getCurrentInstance()
         const iconStyle = computed((): CSSProperties => {
             const { size, color } = props
             let s = `${size.replace('px', '')}px`
@@ -26,10 +27,12 @@ export default defineComponent({
             }
         })
 
-        if (props.name.indexOf('el-icon-') === 0) {
-            return () => createVNode('el-icon', { class: 'icon el-icon', style: iconStyle.value }, [createVNode(resolveComponent(props.name))])
-        } else {
-            return () => createVNode('i', { class: [props.name, 'icon'], style: iconStyle.value })
+        return () => {
+            const name = props.name.trim()
+            const componentName = name.startsWith('el-icon-') ? name : 'el-icon-' + name
+            const component = instance?.appContext.components[componentName]
+            if (component) return createVNode('span', { class: 'icon el-icon', style: iconStyle.value }, [createVNode(component)])
+            return createVNode('i', { class: [name, 'icon'], style: iconStyle.value })
         }
     },
 })

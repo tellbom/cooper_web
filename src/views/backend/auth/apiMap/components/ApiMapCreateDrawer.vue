@@ -106,7 +106,7 @@
         <template #footer>
             <div class="drawer-footer">
                 <el-button @click="handleCancel">取消</el-button>
-                <el-button type="primary" :loading="submitting" @click="handleSubmit">
+                <el-button type="primary" :loading="submitting" :disabled="!auth(mode === 'edit' ? 'edit' : 'add')" @click="handleSubmit">
                     {{ mode === 'create' ? '创建映射' : '保存修改' }}
                 </el-button>
             </div>
@@ -117,6 +117,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
+import { auth } from '/@/utils/common'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
     createApiMap,
@@ -271,6 +272,7 @@ async function handleSubmit() {
         return
     }
 
+    if (!auth(props.mode === 'edit' ? 'edit' : 'add')) return
     submitting.value = true
     try {
         if (props.mode === 'edit' && props.model) {

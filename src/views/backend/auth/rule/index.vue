@@ -97,7 +97,7 @@
                 <el-table-column label="状态" width="80" align="center">
                     <template #default="{ row }">
                         <el-switch
-                            v-if="canEdit"
+                            v-if="canStatus"
                             :model-value="row.status === 'Active'"
                             size="small"
                             :active-color="'#0066cc'"
@@ -153,10 +153,11 @@ type RuleTableNode = RuleTreeNode & {
 defineOptions({ name: 'auth/rule' })
 
 const adminInfo = useAdminInfo()
-const canCreate = computed(() => adminInfo.super || auth('add'))
-const canEdit = computed(() => adminInfo.super || auth('edit'))
-const canDelete = computed(() => adminInfo.super || auth('del'))
-const canSort = computed(() => adminInfo.super || auth('sortable'))
+const canCreate = computed(() => auth('add'))
+const canEdit = computed(() => auth('edit'))
+const canDelete = computed(() => auth('del'))
+const canSort = computed(() => auth('sortable'))
+const canStatus = computed(() => auth('status'))
 
 const headerCellStyle = {
     background: '#fafafc',
@@ -366,12 +367,14 @@ const currentRow = ref<RuleTreeNode | null>(null)
 const parentRow = ref<RuleTreeNode | null>(null)
 
 function openCreate(parent: RuleTreeNode | null) {
+    if (!canCreate.value) return
     formMode.value = 'create'
     currentRow.value = null
     parentRow.value = parent
     formDrawerVisible.value = true
 }
 function openEdit(row: RuleTreeNode) {
+    if (!canEdit.value) return
     formMode.value = 'edit'
     currentRow.value = { ...row }
     parentRow.value = null
@@ -383,6 +386,7 @@ function handleFormSubmit() {
 }
 
 async function handleStatusToggle(row: RuleTableNode, active: string | number | boolean) {
+    if (!canStatus.value) return
     const status = active === true ? 'Active' : 'Disabled'
     try {
         await updateRuleStatus(row.ruleCode, { status })
@@ -391,12 +395,14 @@ async function handleStatusToggle(row: RuleTableNode, active: string | number | 
     } catch {}
 }
 async function handleWeighChange(row: RuleTableNode, val: number | undefined) {
+    if (!canSort.value) return
     try {
         await updateRuleWeigh(row.ruleCode, { weigh: val ?? 0 })
         row.weigh = val ?? 0
     } catch {}
 }
 async function handleDelete(row: RuleTreeNode) {
+    if (!canDelete.value) return
     const hasChildren = (row.children ?? []).length > 0
     try {
         await ElMessageBox.confirm(
@@ -404,6 +410,7 @@ async function handleDelete(row: RuleTreeNode) {
             '删除确认',
             { confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'warning' }
         )
+        if (!canDelete.value) return
         await deleteRule(row.ruleCode)
         ElMessage.success('规则已删除')
         loadTree()

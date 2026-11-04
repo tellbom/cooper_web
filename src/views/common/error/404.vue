@@ -2,7 +2,7 @@
     <main class="error-page">
         <p class="error-code">404</p>
         <h1>页面不存在</h1>
-        <p>当前地址不属于 Cochain，或对应菜单已被移除。</p>
+        <p>当前地址不属于 Cooper，或对应菜单已被移除。</p>
         <div class="error-actions">
             <el-button @click="router.back()">返回上一页</el-button>
             <el-button type="primary" @click="router.replace('/login')">返回登录页</el-button>

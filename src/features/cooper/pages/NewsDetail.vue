@@ -3,7 +3,17 @@
         <div class="breadcrumbs">
             <router-link to="/cooper/home">首页</router-link> / <router-link to="/cooper/news">新闻资讯</router-link> / 正文
         </div>
+        <PortalStatus v-if="!detail.pending.value && (missing || detail.error.value)" class="news-detail-status"
+            :kind="missing ? 'notfound' : 'unavailable'" :code="missing ? 404 : undefined"
+            :title="missing ? '这篇新闻暂时找不到了' : '新闻暂时未能加载'"
+            :description="missing ? '链接可能有误，或这篇新闻已被移除。可以返回新闻资讯，继续浏览其他内容。' : '网络或服务暂时不可用，请稍后重新加载。'"
+            :hint="missing ? '请检查链接中的新闻 ID 是否正确。' : '当前新闻链接已保留，可直接重试。'">
+            <el-button v-if="!missing" type="primary" :icon="RefreshCw" @click="detail.load()">重新加载</el-button>
+            <el-button v-if="newsTarget" :type="missing ? 'primary' : 'default'" :icon="Newspaper" @click="router.push(newsTarget.path)">返回新闻资讯</el-button>
+            <el-button v-if="canGoBack" :icon="ArrowLeft" @click="router.back()">返回上一页</el-button>
+        </PortalStatus>
         <LoadState
+            v-else
             :loading="detail.pending.value"
             :error="detail.error.value"
             :empty="!detail.data.value"
@@ -74,7 +84,7 @@
 </template>
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { Eye,Heart,PenLine,CalendarDays } from 'lucide-vue-next'
+import { Eye,Heart,PenLine,CalendarDays,RefreshCw,Newspaper,ArrowLeft } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import * as api from '../api'
@@ -83,13 +93,34 @@ import { newsLink, officeLink, safeLink } from '../links'
 import { createNewsPager } from '../newsPaging'
 import LoadState from '../components/LoadState.vue'
 import NewsSkeleton from '../components/NewsSkeleton.vue'
+import PortalStatus from '../components/PortalStatus.vue'
+import { PortalApiError } from '../http'
+import { getIssuedRouteByComponent } from '/@/utils/router'
+import { portalEvents } from '../realtime'
 const route = useRoute(),
     router = useRouter(),
     id = computed(() => String(route.query.id || '')),
     size = ref(1)
 const liked=ref(false),likeBusy=ref(false),recorded=new Set<string>()
-const detail = useResource(() => api.getNewsDetailitemapi(id.value)),
+const detail = useResource(async () => {
+        if (!id.value.trim()) throw new PortalApiError(404, '新闻不存在')
+        const article = await api.getNewsDetailitemapi(id.value)
+        if (!article || typeof article === 'object' && !Object.keys(article).length) throw new PortalApiError(404, '新闻不存在')
+        if (typeof article.Id !== 'string' || typeof article.Title !== 'string' || typeof article.CreateTime !== 'string' || typeof article.Content !== 'string')
+            throw new PortalApiError(502, '新闻内容暂时无法显示')
+        return article
+    }),
     n = computed(() => detail.data.value)
+const missing = computed(() => {
+    const reason = detail.failure.value
+    return reason instanceof PortalApiError && reason.status === 404 || reason instanceof Error && reason.message === '404'
+        || !detail.pending.value && !detail.error.value && !n.value
+})
+const newsTarget = computed(() => getIssuedRouteByComponent('/src/features/cooper/pages/NewsList.vue'))
+const canGoBack = computed(() => {
+    const current = route.fullPath, previous = router.options.history.state.back
+    return typeof previous === 'string' && previous.startsWith('/cooper/') && previous !== current
+})
 const views = useResource<number | null>(() => Promise.resolve(null)),
     likes = useResource<number | null>(() => Promise.resolve(null))
 const pager = createNewsPager((ChannelID, Page, Limit) => api.getNewsDetail({ ChannelID, Page, Limit }))
@@ -103,6 +134,13 @@ const siblings = useResource(() => {
 })
 const briefs = useResource(() => api.getNewsKuaiBao(6))
 function reloadSiblings() { pager.clear(); void siblings.load() }
+function reloadNews() {
+    pager.clear()
+    void detail.load()
+    void briefs.load()
+}
+portalEvents.on('news', reloadNews)
+onBeforeUnmount(() => portalEvents.off('news', reloadNews))
 watch(id, () => {
     views.data.value = null
     likes.data.value = null

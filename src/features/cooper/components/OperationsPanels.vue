@@ -49,36 +49,14 @@
                 :empty="!duty.data.value?.list.length"
                 variant="table"
                 @retry="duty.load"
-                ><div
-                    class="mini-table dynamic-table"
-                    :style="{
-                        '--duty-cols': dutyColumns
-                            .map((c) => (c.includes('电话') ? 'minmax(0,1.5fr)' : c === '星期' ? 'minmax(0,.7fr)' : 'minmax(0,1fr)'))
-                            .join(' '),
-                    }"
-                >
-                    <div class="table-head">
-                        <span v-for="c in dutyColumns" :key="c">{{ c }}</span>
-                    </div>
-                    <div class="autoscroll">
-                        <div :class="{ 'marquee-y': (duty.data.value?.list.length || 0) > 4 }">
-                            <div
-                                v-for="(r, i) in repeatedDuty"
-                                :key="i"
-                                class="table-row"
-                                :class="{ highlight: Object.values(r).some((v) => v === ymd(now).slice(5)) }"
-                            >
-                                <DutyCell
-                                    v-for="c in dutyColumns"
-                                    :key="c"
-                                    :column="c"
-                                    :value="r[c]"
-                                    :today="r['日期'] === ymd(now).slice(5)"
-                                    :username="username"
-                                />
-                            </div>
-                        </div>
-                    </div></div></LoadState
+                ><el-table class="prototype-table home-duty-table" :data="duty.data.value?.list || []" height="100%"
+                    :row-class-name="({ row }) => dutyDayDiff(row, now) === 0 ? 'duty-highlight' : ''">
+                    <el-table-column v-for="c in dutyColumns" :key="c.prop" :prop="c.prop" :label="c.label"
+                        :align="c.align || 'left'" :width="dutyColumnWidth(c)" :min-width="c.prop === 'OnDutyTime' ? 105 : 100">
+                        <template #default="{ row }"><DutyCell :column="c" :value="row[c.prop]"
+                            :today="dutyDayDiff(row, now) === 0" :username="username" /></template>
+                    </el-table-column>
+                </el-table></LoadState
         ></PortalCard>
         <DutyDialog v-if="open" v-model="open" />
     </template>
@@ -204,6 +182,7 @@ import DutyCell from './DutyCell.vue'
 import SegmentedControl from './SegmentedControl.vue'
 import { useAdminInfo } from '/@/stores/adminInfo'
 import { safeLink } from '../links'
+import { dutyColumnWidth, dutyDayDiff } from '../onDuty'
 const admin = useAdminInfo(), username = computed(() => admin.nickname || admin.username)
 const props = defineProps<{ kind: 'meetings' | 'duty' | 'honor' | 'tech' | 'fault' }>(),
     open = ref(false),
@@ -224,11 +203,7 @@ const faultTab = ref('设备故障'), faultResource = computed(() => faultTab.va
 const meetingItems = computed(() => meetings.data.value || [])
 const state = (m: api.MeetingInfo) => (now.value < new Date(m.startTime) ? '未开始' : now.value > new Date(m.endTime) ? '已结束' : '进行中')
 const repeatedMeetings = computed(() => (meetingItems.value.length > 4 ? [...meetingItems.value, ...meetingItems.value] : meetingItems.value))
-const dutyColumns = computed(() => Object.keys(duty.data.value?.list[0] || {}))
-const repeatedDuty = computed(() => {
-    const list = duty.data.value?.list || []
-    return list.length > 4 ? [...list, ...list] : list
-})
+const dutyColumns = computed(() => duty.data.value?.colums || [])
 const honorSteps = computed(() => Math.max(1, (honors.data.value?.length || 0) - 3))
 const selectedWork = ref<api.HotWorkDto | null>(null)
 // 在内网填写荣誉网站地址；更多入口和荣誉卡片均直接打开该网站。

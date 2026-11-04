@@ -37,7 +37,8 @@
   {
     "path": "news/detail",
     "title": "新闻详情",
-    "component": "/src/features/cooper/pages/NewsDetail.vue"
+    "component": "/src/features/cooper/pages/NewsDetail.vue",
+    "extend": "add_rules_only"
   },
   {
     "path": "search",
@@ -47,16 +48,25 @@
   {
     "path": "preview/news",
     "title": "新闻预览",
-    "component": "/src/features/cooper/pages/Preview.vue"
+    "component": "/src/features/cooper/pages/Preview.vue",
+    "extend": "add_rules_only",
+    "menu_type": "link",
+    "url": "/preview/news"
   },
   {
     "path": "preview/notice",
     "title": "公告预览",
-    "component": "/src/features/cooper/pages/Preview.vue"
+    "component": "/src/features/cooper/pages/Preview.vue",
+    "extend": "add_rules_only",
+    "menu_type": "link",
+    "url": "/preview/notice"
   },
   {
     "path": "preview/office",
     "title": "文档预览",
-    "component": "/src/features/cooper/pages/OfficePreview.vue"
+    "component": "/src/features/cooper/pages/OfficePreview.vue",
+    "extend": "add_rules_only",
+    "menu_type": "link",
+    "url": "/preview/office"
   }
 ]

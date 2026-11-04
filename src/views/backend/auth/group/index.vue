@@ -45,7 +45,7 @@
                 <el-table-column label="状态" width="90" align="center">
                     <template #default="{ row }">
                         <el-switch
-                            v-if="canEdit"
+                            v-if="canStatus"
                             :model-value="row.status === 'Active'"
                             size="small"
                             :active-color="'#0066cc'"
@@ -77,7 +77,7 @@
                 <el-table-column label="操作" width="220" align="center" fixed="right">
                     <template #default="{ row }">
                         <el-button v-if="canEdit" type="primary" link size="small" :icon="Edit" @click="openEdit(row)"> 编辑 </el-button>
-                        <el-button v-if="canEdit" type="primary" link size="small" :icon="Key" @click="openRules(row)"> 授权规则 </el-button>
+                        <el-button v-if="canRules" type="primary" link size="small" :icon="Key" @click="openRules(row)"> 授权规则 </el-button>
                         <el-button v-if="canDelete" type="danger" link size="small" :icon="Delete" @click="handleDelete(row)"> 删除 </el-button>
                     </template>
                 </el-table-column>
@@ -101,6 +101,7 @@ import GroupFormDrawer from './components/GroupFormDrawer.vue'
 import GroupRulesDrawer from './components/GroupRulesDrawer.vue'
 import { getGroupList, deleteGroup, updateGroupStatus, getRuleTree, type GroupItem, type RuleTreeNode } from '/@/api/backend/rbac'
 import { useAdminInfo } from '/@/stores/adminInfo'
+import { auth } from '/@/utils/common'
 
 defineOptions({ name: 'auth/group' })
 
@@ -111,9 +112,11 @@ type GroupTableNode = GroupItem & {
 
 // ── 权限 ───────────────────────────────────────────────────────
 const adminInfo = useAdminInfo()
-const canCreate = computed(() => adminInfo.super === true)
-const canEdit = computed(() => adminInfo.super === true)
-const canDelete = computed(() => adminInfo.super === true)
+const canCreate = computed(() => auth('add'))
+const canEdit = computed(() => auth('edit'))
+const canDelete = computed(() => auth('del'))
+const canStatus = computed(() => auth('status'))
+const canRules = computed(() => auth('rules'))
 
 // ── 搜索字段 ───────────────────────────────────────────────────
 const searchFields = [
@@ -276,11 +279,13 @@ function toggleExpandAll() {
 
 // ── 新增 / 编辑 ────────────────────────────────────────────────
 function openCreate() {
+    if (!canCreate.value) return
     formMode.value = 'create'
     currentRow.value = null
     formDrawerVisible.value = true
 }
 function openEdit(row: GroupItem) {
+    if (!canEdit.value) return
     formMode.value = 'edit'
     currentRow.value = { ...row }
     formDrawerVisible.value = true
@@ -292,6 +297,7 @@ function handleFormSubmit() {
 
 // ── 规则授权 ───────────────────────────────────────────────────
 function openRules(row: GroupItem) {
+    if (!canRules.value) return
     currentRow.value = { ...row }
     rulesDrawerVisible.value = true
 }
@@ -302,6 +308,7 @@ function handleRulesSubmit() {
 
 // ── 状态切换 ───────────────────────────────────────────────────
 async function handleStatusToggle(row: GroupItem, active: string | number | boolean) {
+    if (!canStatus.value) return
     const status = active ? 'Active' : 'Disabled'
     try {
         await updateGroupStatus(row.groupCode, { status })
@@ -314,12 +321,14 @@ async function handleStatusToggle(row: GroupItem, active: string | number | bool
 
 // ── 删除 ───────────────────────────────────────────────────────
 async function handleDelete(row: GroupItem) {
+    if (!canDelete.value) return
     try {
         await ElMessageBox.confirm(
             `确定删除权限组「${row.groupName}」（${row.groupCode}）？\n删除前请确认无子组且无关联用户，否则后端会拒绝。`,
             '删除确认',
             { confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'warning' }
         )
+        if (!canDelete.value) return
         await deleteGroup(row.groupCode)
         ElMessage.success('权限组已删除')
         loadData()

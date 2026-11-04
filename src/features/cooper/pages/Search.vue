@@ -76,11 +76,12 @@
                                     ><span>|</span><span>{{ i.publisher }}{{ i.author && i.author !== i.publisher ? ' · ' + i.author : '' }}</span>
                                 </div>
                                 <h3>{{ i.title }}<ArrowUpRight :size="16" /></h3>
-                                <div
-                                    v-if="i.sourceType === 'Announcement' && (i.contentHtml || i.highlight || i.summary)"
-                                    class="search-announcement-excerpt"
-                                    v-html="api.sanitizeHtml(i.highlight || i.contentHtml || i.summary || '')"
+                                <AnnouncementContent
+                                    v-if="i.sourceType === 'Announcement' && i.contentHtml"
+                                    :html="i.contentHtml"
+                                    preview
                                 />
+                                <p v-else-if="i.sourceType === 'Announcement'" class="muted">该公告尚未导入完整 HTML 正文</p>
                                 <p v-else-if="i.sourceType === 'News'" class="search-news-excerpt">{{ newsSnippet(i) }}</p>
                             </div>
                             <img v-if="i.cover" :src="i.cover" alt="" />
@@ -109,7 +110,9 @@
                 ><h3 class="dialog-heading-title">{{ reading?.title }}</h3>
                 <p class="dialog-subtitle">{{ reading?.publisher }} · {{ reading?.publishTime.replace('T', ' ').slice(0, 16) }}</p></template
             >
-            <div v-if="reading?.contentHtml" class="prose-news" v-html="api.sanitizeHtml(reading.contentHtml)" />
+            <AnnouncementContent v-if="reading?.sourceType === 'Announcement' && reading.contentHtml" :html="reading.contentHtml" />
+            <p v-else-if="reading?.sourceType === 'Announcement'" class="muted">该公告尚未导入完整 HTML 正文，请重新导入原始公告。</p>
+            <div v-else-if="reading?.contentHtml" class="prose-news" v-html="api.sanitizeHtml(reading.contentHtml)" />
             <p v-else class="muted">{{ reading?.summary || '暂无正文' }}</p></el-dialog
         >
     </div>
@@ -120,9 +123,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { Search as SearchIcon, Newspaper, Megaphone, ArrowUpRight } from 'lucide-vue-next'
 import * as api from '../api'
 import { ymd, addDays } from '../date'
-import { newsLink, safeLink } from '../links'
+import { newsLink } from '../links'
 import LoadState from '../components/LoadState.vue'
 import SegmentedControl from '../components/SegmentedControl.vue'
+import AnnouncementContent from '../components/AnnouncementContent.vue'
 const route = useRoute(),
     router = useRouter(),
     keyword = ref(String(route.query.q || '')),
@@ -213,7 +217,7 @@ const groups = computed(() => {
 })
 const hasMore = computed(() => {
     const last = chunks.value[chunks.value.length - 1]
-    return !!last && (last.displayMode === 'days' ? last.data.page < last.data.totalPages : last.data.hasMore ?? last.data.results.length === last.data.pageSize)
+    return !!last && (last.displayMode === 'days' ? last.data.page < last.data.totalPages : last.data.results.length === last.data.pageSize)
 })
 const degraded = computed(() => chunks.value.some((r) => r.data.degraded)),
     maxDepth = computed(() => chunks.value.some((r) => r.data.maxDepthReached))
@@ -225,11 +229,7 @@ function apply() {
     setQuery({ q: keyword.value.trim() || undefined })
 }
 function openItem(i: api.SearchItem) {
-    if (i.vectorResult) {
-        const url = safeLink(i.url || '')
-        if (url) window.open(url, '_blank', 'noopener')
-        else reading.value = i
-    } else if (i.sourceType === 'News') router.push(newsLink(i.newsId))
+    if (i.sourceType === 'News') router.push(newsLink(i.newsId))
     else reading.value = i
 }
 function newsSnippet(item: api.SearchItem) {

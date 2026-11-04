@@ -32,10 +32,5 @@
         "src/**/*.vue",
         "types/**/*.d.ts",
         "vite.config.ts"
-    ],
-    "exclude": [
-        "src/views/backend/auth/adminLog/**/*.vue",
-        "src/features/cochain/**/*",
-        "src/views/backend/cochain/**/*"
     ]
 }

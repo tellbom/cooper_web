@@ -65,7 +65,11 @@ export async function initRbacBridge(): Promise<RbacBridgeResult> {
 
         return { success: true, routePath: result.routePath }
     } catch (err: any) {
-        const msg = err?.msg ?? err?.message ?? 'RBAC 认证失败'
+        const status = err?.response?.status
+        const forbidden = status === 403 || err?.code === 40300
+        const unavailable = status >= 500 || typeof err?.code === 'number' && err.code >= 50000 || err?.isAxiosError && !err?.response
+        const msg = forbidden ? '当前账号没有进入此项目的权限'
+            : unavailable ? '权限服务暂时不可用，请稍后重新登录' : err?.msg ?? err?.message ?? 'RBAC 认证失败'
         return { success: false, reason: msg }
     }
 }
@@ -102,7 +106,7 @@ export async function loadRbacBackendIndex() {
 
         return result
     } catch (err: any) {
-        console.error('[rbac/bridge] loadRbacBackendIndex failed:', err)
+        console.error('[rbac/bridge] backend initialization failed', { status: err?.response?.status, code: err?.code })
         return null
     }
 }

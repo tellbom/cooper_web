@@ -187,15 +187,18 @@ function createRbacAxios(): AxiosInstance {
                 message = HTTP_ERROR_MESSAGES[status] ?? `HTTP ${status} 错误`
 
                 // 401：JWT 失效，跳转登录
-                if (status === 401) {
+                const projectDenied = status === 403 && ['ProjectNotAuthorized', 'UserDisabled', 'ProjectDisabled'].includes(error.response.data?.reason)
+                if (status === 401 || projectDenied) {
                     const adminInfo = useAdminInfo()
-                    adminInfo.removeToken?.()
+                    if (status === 401) adminInfo.removeToken()
+                    else adminInfo.clearRbacInfo()
                     // 依赖宿主路由，延迟执行避免循环依赖
                     setTimeout(() => {
-                        import('/@/router/index').then(({ default: router }) => {
-                            if (router.currentRoute.value.name !== 'adminLogin') {
-                                router.push({ name: 'adminLogin' })
-                            }
+                        import('/@/utils/router').then(async ({ clearAdminRoutes }) => {
+                            clearAdminRoutes()
+                            const { default: router } = await import('/@/router/index')
+                            if (projectDenied) router.replace('/401')
+                            else if (router.currentRoute.value.name !== 'adminLogin') router.replace({ name: 'adminLogin' })
                         })
                     }, 0)
                 }

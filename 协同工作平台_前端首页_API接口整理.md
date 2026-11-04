@@ -338,7 +338,7 @@ interface HotWorkDto {
 
 | 功能 / 接口 | 方法 | URL | 网关 | 参数 | 返回 |
 |---|---|---|---|---|---|
-| 值班列表 `getOnDutyList` | GET | `/api/app/on-duty/get-list` | Cooper | `{ isMySelf?: boolean; context?: string; page?: number; limit?: number }`（首页传 `null`） | `HttpCode<BaAutoColumnTableDto<List<Dictionary<string,string>>>>`，`res.data.list` 与 `res.data.columns` |
+| 值班列表 `getOnDutyList` | GET | `/api/app/on-duty/get-list` | Cooper | `{ isMySelf?: boolean; context?: string; page?: number; limit?: number }`（首页传 `null`） | `HttpCode<BaAutoColumnTableDto<List<Dictionary<string,string>>>>`，`res.data.list` 与 `res.data.colums`（生产字段拼写） |
 | 会议信息 `getmeetingInfos` | GET | `/api/app/apply-meeting/passed-room` | newOA（`/newOARouter`） | 无 | `res.data[]` `{ meetingTitle, roomName, startTime, endTime }` 均 `string` |
 
 值班列表返回结构：
@@ -351,6 +351,8 @@ interface OnDutyTableResult {
   remark: string;
 }
 ```
+
+**生产值班结构确认（2026-11-02，用户提供）：** “我的值班”和“全部值班”返回相同结构，查询仍分别传 `isMySelf=true/false`；相同结构不代表记录相同。外层字段为 `Count、arr、code、data、msg、time`。`data` 包含 `colums、list、remark、total`；`colums[]` 包含 `align、label、operatortype、prop、render、width`。`list[]` 的字段为 `OnDutyTime、gongduan、gongyi、shebei、weixiu、xietiaozhongxin、zhuanyechang`。表头标签、顺序和对齐读取列定义，日期读取 `OnDutyTime`，不能写死“日期／星期／值班领导／联系电话”等字典键。旧文档的 `columns` 仅作兼容别名，Mock 使用生产拼写 `colums`；未知 `render` 不作为可执行代码运行。日期缺失不编造日期，显示“日期待确认”。
 
 ### 3.6 故障与制造问题（`Often.vue → Fault.vue`）
 

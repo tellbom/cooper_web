@@ -73,7 +73,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Eye } from 'lucide-vue-next'
 import * as api from '../api'
@@ -81,6 +81,7 @@ import { useResource } from '../useResource'
 import { newsLink } from '../links'
 import LoadState from '../components/LoadState.vue'
 import NewsSkeleton from '../components/NewsSkeleton.vue'
+import { portalEvents } from '../realtime'
 const route = useRoute(),
     router = useRouter()
 const channels = useResource(api.getnewscenterapi),
@@ -101,6 +102,12 @@ watch(
 )
 const lead = computed(() => (page.value === 1 && list.data.value?.arr[0]?.isImage ? list.data.value.arr[0] : null))
 const rest = computed(() => (lead.value ? list.data.value?.arr.slice(1) : list.data.value?.arr))
+function reloadNews() {
+    void list.load()
+    void briefs.load()
+}
+portalEvents.on('news', reloadNews)
+onBeforeUnmount(() => portalEvents.off('news', reloadNews))
 function setQuery(patch: Record<string, string | number>) {
     router.push({ query: { ...route.query, ...patch } })
 }

@@ -18,7 +18,7 @@
             @size-change="handleSizeChange"
         >
             <template #toolbar-left>
-                <el-button type="primary" :icon="Plus" @click="openCreate"> 新增映射 </el-button>
+                <el-button v-if="canCreate" type="primary" :icon="Plus" @click="openCreate"> 新增映射 </el-button>
                 <el-button :icon="Refresh" circle @click="loadData" title="刷新" />
             </template>
 
@@ -53,8 +53,8 @@
             </template>
 
             <template #operation="{ row }">
-                <el-button type="primary" link size="small" :icon="Edit" @click="openEdit(row)"> 编辑 </el-button>
-                <el-button type="danger" link size="small" :icon="Delete" @click="handleDelete(row)"> 删除 </el-button>
+                <el-button v-if="canEdit" type="primary" link size="small" :icon="Edit" @click="openEdit(row)"> 编辑 </el-button>
+                <el-button v-if="canDelete" type="danger" link size="small" :icon="Delete" @click="handleDelete(row)"> 删除 </el-button>
             </template>
         </Commontable>
 
@@ -63,15 +63,19 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Delete, Edit, Plus, Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Commonsearch from '/@/components/claudetable/Commonsearch.vue'
 import Commontable from '/@/components/claudetable/Commontable.vue'
 import ApiMapCreateDrawer from './components/ApiMapCreateDrawer.vue'
+import { auth } from '/@/utils/common'
 import { deleteApiMap, getApiMapRecords, getRuleTree, type ApiMapRecordItem, type RuleTreeNode } from '/@/api/backend/rbac'
 
 defineOptions({ name: 'auth/apiMap' })
+const canCreate = computed(() => auth('add'))
+const canEdit = computed(() => auth('edit'))
+const canDelete = computed(() => auth('del'))
 
 const searchFields = [
     {
@@ -173,12 +177,14 @@ function handleSizeChange(size: number) {
 }
 
 function openCreate() {
+    if (!canCreate.value) return
     formMode.value = 'create'
     currentRow.value = null
     formDrawerVisible.value = true
 }
 
 function openEdit(row: ApiMapRecordItem) {
+    if (!canEdit.value) return
     formMode.value = 'edit'
     currentRow.value = { ...row }
     formDrawerVisible.value = true
@@ -190,6 +196,7 @@ function handleFormSubmit() {
 }
 
 async function handleDelete(row: ApiMapRecordItem) {
+    if (!canDelete.value) return
     try {
         await ElMessageBox.confirm(`确定删除 ${row.httpMethod} ${row.routePattern} 的 API 映射？删除后会触发 api-map 缓存失效。`, '删除确认', {
             confirmButtonText: '确定删除',
@@ -201,6 +208,7 @@ async function handleDelete(row: ApiMapRecordItem) {
     }
 
     try {
+        if (!canDelete.value) return
         await deleteApiMap(row.id)
         ElMessage.success('API 映射已删除')
         loadData()

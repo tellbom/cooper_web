@@ -28,6 +28,8 @@ export interface NavTabs {
     tabFullScreen: boolean
     tabsViewRoutes: RouteRecordRaw[]
     authNode: Map<string, string[]>
+    issuedPaths: string[]
+    permissionsLoaded: boolean
 }
 
 export interface AdminInfo {

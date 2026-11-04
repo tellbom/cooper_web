@@ -393,7 +393,7 @@ defineExpose({ clearSelection })
 :deep(.el-table) {
     border-radius: var(--co-radius-md);
     overflow: hidden;
-    /* el-table 内部有 --el-table-border-color，由 cochain-tokens.scss 的
+    /* el-table 内部有 --el-table-border-color，由 tokens.scss 的
      --el-table-border-color: var(--co-divider) 统一覆盖，此处无需重复 */
 }
 
@@ -446,7 +446,7 @@ defineExpose({ clearSelection })
 }
 
 /* 分页激活页码 — Token 主色
-   cochain-tokens.scss 已覆盖 --el-pagination-hover-color，
+   tokens.scss 已覆盖 --el-pagination-hover-color，
    此处额外保证 is-background 模式下激活背景色 */
 :deep(.el-pagination.is-background .el-pager li:not(.is-disabled).is-active) {
     background-color: var(--co-primary);

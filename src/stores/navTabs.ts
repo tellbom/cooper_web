@@ -18,6 +18,8 @@ export const useNavTabs = defineStore(
             tabFullScreen: false,
             tabsViewRoutes: [],
             authNode: new Map(),
+            issuedPaths: [],
+            permissionsLoaded: false,
         })
 
         /**
@@ -148,6 +150,16 @@ export const useNavTabs = defineStore(
             state.authNode = data
         }
 
+        const clearPermissions = () => {
+            state.permissionsLoaded = false
+            state.issuedPaths = []
+            state.tabsViewRoutes = []
+            state.authNode = new Map()
+            state.tabsView = []
+            state.activeRoute = null
+            state.activeIndex = 0
+        }
+
         /**
          * 设置当前 tab 是否全屏
          * @param status 全屏状态
@@ -211,6 +223,7 @@ export const useNavTabs = defineStore(
             setTabsViewRoutes,
             setAuthNode,
             fillAuthNode,
+            clearPermissions,
             setFullScreen,
             getTabsViewDataByPath,
             getTabsViewDataByRoute,

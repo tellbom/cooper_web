@@ -174,6 +174,7 @@ export function auth(node: { name: string; subNodeName?: string }): boolean
  */
 export function auth(node: string | { name: string; subNodeName?: string }) {
     const store = useNavTabs()
+    if (!store.state.permissionsLoaded) return false
     if (typeof node === 'string') {
         const path = getCurrentRoutePath()
         if (store.state.authNode.has(path)) {
